@@ -21,6 +21,11 @@ export async function createCreditTransaction(
 
     const newBalance = user.creditBalance + amount;
 
+    // Prevent negative balances for spending operations
+    if (amount < 0 && newBalance < 0) {
+      throw new Error('Insufficient credits');
+    }
+
     // Update user balance
     await tx.user.update({
       where: { id: userId },

@@ -89,6 +89,25 @@ describe('Credit transaction service', () => {
         )
       ).rejects.toThrow('User not found');
     });
+
+    it('should throw error for insufficient balance', async () => {
+      const user = await testDb.user.create({
+        data: {
+          email: 'test@example.com',
+          passwordHash: 'hash',
+          name: 'Test User',
+          creditBalance: 5,
+        },
+      });
+
+      await expect(
+        createCreditTransaction(
+          user.id,
+          -10,
+          CreditTransactionType.AI_ANALYSIS
+        )
+      ).rejects.toThrow('Insufficient credits');
+    });
   });
 
   describe('getUserCredits', () => {
