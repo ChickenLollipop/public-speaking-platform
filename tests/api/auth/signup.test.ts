@@ -41,6 +41,7 @@ describe('POST /api/auth/signup', () => {
     });
     expect(transaction?.amount).toBe(50);
     expect(transaction?.type).toBe('INITIAL_BONUS');
+    expect(transaction?.balanceAfter).toBe(50);
   });
 
   it('should reject duplicate email', async () => {
