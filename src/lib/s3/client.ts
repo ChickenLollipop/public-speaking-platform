@@ -27,3 +27,4 @@ export function getS3Client(): S3Client {
 }
 
 export const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || 'speaking-platform-dev';
+export const S3_BUCKET_REGION = awsRegion || 'us-east-1';
