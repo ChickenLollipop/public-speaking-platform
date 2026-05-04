@@ -21,7 +21,8 @@
     "jose": "^5.0.0",
     "zod": "^3.22.0",
     "@tanstack/react-query": "^5.0.0",
-    "aws-sdk": "^2.1500.0",
+    "@aws-sdk/client-s3": "^3.500.0",
+    "@aws-sdk/s3-request-presigner": "^3.500.0",
     "@deepgram/sdk": "^3.0.0",
     "@anthropic-ai/sdk": "^0.20.0"
   },
