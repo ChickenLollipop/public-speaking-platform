@@ -34,5 +34,11 @@ export function getVideoUrl(key: string): string {
   if (!key || key.includes('..')) {
     throw new Error('Invalid S3 key');
   }
+
+  // Validate key format matches expected pattern
+  if (!key.startsWith('videos/') || !key.endsWith('.mp4')) {
+    throw new Error('Invalid S3 key format');
+  }
+
   return `https://${S3_BUCKET_NAME}.s3.${S3_BUCKET_REGION}.amazonaws.com/${key}`;
 }
