@@ -10,9 +10,12 @@ export interface ContentAnalysis {
   improvement_suggestions: string[];
 }
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const apiKey = process.env.ANTHROPIC_API_KEY;
+if (!apiKey) {
+  throw new Error('ANTHROPIC_API_KEY environment variable is required');
+}
+
+const anthropic = new Anthropic({ apiKey });
 
 export async function analyzeContent(
   transcript: string,
@@ -61,22 +64,51 @@ Return response as JSON matching this schema:
   "improvement_suggestions": string[]
 }`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
-    max_tokens: 1024,
-    messages: [
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-  });
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+    });
 
-  const textContent = response.content.find(c => c.type === 'text');
-  if (!textContent || textContent.type !== 'text') {
-    throw new Error('Invalid response from API');
+    const textContent = response.content.find(c => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('Invalid response from API');
+    }
+
+    try {
+      // Strip markdown code blocks if present
+      let jsonText = textContent.text.trim();
+      if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/^```(?:json)?\n?/g, '').replace(/\n?```$/g, '');
+      }
+
+      const parsed = JSON.parse(jsonText);
+
+      // Validate required fields exist
+      if (typeof parsed.has_intro !== 'boolean' ||
+          typeof parsed.has_conclusion !== 'boolean' ||
+          typeof parsed.structure_score !== 'number' ||
+          typeof parsed.clarity_feedback !== 'string' ||
+          typeof parsed.persuasiveness_score !== 'number' ||
+          !Array.isArray(parsed.weak_transitions) ||
+          !Array.isArray(parsed.improvement_suggestions)) {
+        throw new Error('Invalid response structure from API');
+      }
+
+      return parsed as ContentAnalysis;
+    } catch (error) {
+      throw new Error(`Failed to parse LLM response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Failed to parse')) {
+      throw error; // Re-throw parsing errors with context
+    }
+    throw new Error(`Content analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  const analysis = JSON.parse(textContent.text) as ContentAnalysis;
-  return analysis;
 }
