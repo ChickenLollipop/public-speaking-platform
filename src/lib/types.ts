@@ -24,6 +24,7 @@ export interface Presentation {
   description?: string;
   type: PresentationType;
   videoUrl?: string; // S3 URL in production, blob URL in Phase 1
+  scriptText?: string; // Text script for text-based presentations
   duration?: number; // in seconds
   visibility: PresentationVisibility;
   status: PresentationStatus;
