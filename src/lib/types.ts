@@ -35,7 +35,7 @@ export interface Presentation {
 export interface DeliveryMetrics {
   pace_wpm: number; // words per minute
   filler_word_count: number;
-  filler_words_list: Array<{ word: string; count: number }>;
+  filler_words_list: string[]; // e.g., ['um (3x)', 'uh (2x)', 'like (1x)']
   avg_volume: number; // 0-100
   pause_count: number;
   eye_contact_score: number; // 0-100
@@ -59,7 +59,7 @@ export interface AIAnalysis {
   contentAnalysis: ContentAnalysis;
   overallScore: number; // 0-100
   creditsSpent: number;
-  createdAt: Date;
+  createdAt: string; // ISO string
 }
 
 // Auth types

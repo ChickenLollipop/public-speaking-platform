@@ -1,61 +1,77 @@
 /**
  * Validates email format using RFC 5322 compliant regex
+ * @returns Error message if invalid, null if valid
  */
-export function validateEmail(email: string): boolean {
-  if (!email) return false;
+export function validateEmail(email: string): string | null {
+  if (!email) return 'Email is required';
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+  if (!emailRegex.test(email.trim())) {
+    return 'Invalid email format';
+  }
+
+  return null;
 }
 
 /**
  * Validates password strength
  * Requirements: at least 8 characters, 1 uppercase, 1 lowercase, 1 number
+ * @returns Error message if invalid, null if valid
  */
-export function validatePassword(password: string): boolean {
-  if (!password || password.length < 8) return false;
+export function validatePassword(password: string): string | null {
+  if (!password) return 'Password is required';
+
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters';
+  }
 
   const hasUpperCase = /[A-Z]/.test(password);
   const hasLowerCase = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
 
-  return hasUpperCase && hasLowerCase && hasNumber;
+  if (!hasUpperCase) return 'Password must contain at least one uppercase letter';
+  if (!hasLowerCase) return 'Password must contain at least one lowercase letter';
+  if (!hasNumber) return 'Password must contain at least one number';
+
+  return null;
 }
 
 /**
  * Validates name format
  * Requirements: 2-50 characters, letters, spaces, hyphens, and apostrophes only
+ * @returns Error message if invalid, null if valid
  */
-export function validateName(name: string): boolean {
-  if (!name) return false;
+export function validateName(name: string): string | null {
+  if (!name) return 'Name is required';
 
   const trimmedName = name.trim();
-  if (trimmedName.length < 2 || trimmedName.length > 50) return false;
+  if (trimmedName.length < 2) {
+    return 'Name must be at least 2 characters';
+  }
+  if (trimmedName.length > 50) {
+    return 'Name must not exceed 50 characters';
+  }
 
   const nameRegex = /^[a-zA-Z\s\-']+$/;
-  return nameRegex.test(trimmedName);
+  if (!nameRegex.test(trimmedName)) {
+    return 'Name can only contain letters, spaces, hyphens, and apostrophes';
+  }
+
+  return null;
 }
 
 /**
- * Returns password strength rating and feedback
+ * Returns password strength rating
+ * @returns 'weak', 'medium', or 'strong'
  */
-export function getPasswordStrength(password: string): {
-  strength: 'weak' | 'medium' | 'strong';
-  score: number;
-  feedback: string[];
-} {
-  const feedback: string[] = [];
-  let score = 0;
+export function getPasswordStrength(password: string): 'weak' | 'medium' | 'strong' {
+  if (!password) return 'weak';
 
-  if (!password) {
-    return { strength: 'weak', score: 0, feedback: ['Password is required'] };
-  }
+  let score = 0;
 
   // Length check
   if (password.length >= 8) {
     score += 25;
-  } else {
-    feedback.push('Use at least 8 characters');
   }
 
   if (password.length >= 12) {
@@ -65,40 +81,29 @@ export function getPasswordStrength(password: string): {
   // Uppercase check
   if (/[A-Z]/.test(password)) {
     score += 20;
-  } else {
-    feedback.push('Add uppercase letters');
   }
 
   // Lowercase check
   if (/[a-z]/.test(password)) {
     score += 20;
-  } else {
-    feedback.push('Add lowercase letters');
   }
 
   // Number check
   if (/[0-9]/.test(password)) {
     score += 15;
-  } else {
-    feedback.push('Add numbers');
   }
 
   // Special character check
   if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
     score += 10;
-  } else {
-    feedback.push('Consider adding special characters');
   }
 
   // Determine strength
-  let strength: 'weak' | 'medium' | 'strong';
   if (score < 50) {
-    strength = 'weak';
+    return 'weak';
   } else if (score < 80) {
-    strength = 'medium';
+    return 'medium';
   } else {
-    strength = 'strong';
+    return 'strong';
   }
-
-  return { strength, score, feedback };
 }

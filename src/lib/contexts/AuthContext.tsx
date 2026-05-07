@@ -17,11 +17,12 @@ export interface User {
 
 export interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
   signup: (data: SignupData) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  updateCredits: (newCredits: number) => void;
+  refreshUser: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Create new user with 50 initial credits
     const newUser: User = {
-      id: `user_${Date.now()}`,
+      id: `user-${Date.now()}`,
       name: data.name,
       email: data.email,
       credits: 50,
@@ -138,19 +139,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem('user');
   };
 
-  const updateCredits = (newCredits: number): void => {
-    if (user) {
-      setUser({ ...user, credits: newCredits });
+  const refreshUser = (): void => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Failed to parse stored user:', error);
+        localStorage.removeItem('user');
+        setUser(null);
+      }
+    } else {
+      setUser(null);
     }
   };
 
   const value: AuthContextType = {
     user,
+    isAuthenticated: !!user,
     isLoading,
     signup,
     login,
     logout,
-    updateCredits,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
