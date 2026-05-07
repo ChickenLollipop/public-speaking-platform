@@ -17,7 +17,7 @@ export default function SignupPage() {
     name: '',
     email: '',
     password: '',
-    skillLevel: 'BEGINNER' as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED',
+    skillLevel: 'beginner' as 'beginner' | 'intermediate' | 'advanced',
     goals: [] as string[],
   });
 
@@ -71,7 +71,9 @@ export default function SignupPage() {
       await signup(formData);
       router.push('/dashboard');
     } catch (error) {
-      setErrors({ submit: 'Signup failed. Please try again.' });
+      console.error('Signup failed:', error);
+      const message = error instanceof Error ? error.message : 'Signup failed. Please try again.';
+      setErrors({ submit: message });
     } finally {
       setIsLoading(false);
     }
@@ -135,12 +137,12 @@ export default function SignupPage() {
           </label>
           <select
             value={formData.skillLevel}
-            onChange={(e) => setFormData({ ...formData, skillLevel: e.target.value as any })}
+            onChange={(e) => setFormData({ ...formData, skillLevel: e.target.value as 'beginner' | 'intermediate' | 'advanced' })}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="BEGINNER">Beginner</option>
-            <option value="INTERMEDIATE">Intermediate</option>
-            <option value="ADVANCED">Advanced</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
           </select>
         </div>
 
@@ -167,10 +169,12 @@ export default function SignupPage() {
         </div>
 
         {errors.submit && (
-          <p className="text-sm text-red-500">{errors.submit}</p>
+          <p className="text-sm text-red-500 mt-2" role="alert" aria-live="assertive">
+            {errors.submit}
+          </p>
         )}
 
-        <Button type="submit" className="w-full" loading={isLoading}>
+        <Button type="submit" className="w-full" isLoading={isLoading}>
           Create Account
         </Button>
 

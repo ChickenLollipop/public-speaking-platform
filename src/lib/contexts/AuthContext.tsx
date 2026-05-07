@@ -1,12 +1,22 @@
 'use client';
 
-import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { User, SkillLevel } from '../types';
+
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 export interface SignupData {
   name: string;
   email: string;
   password: string;
+  skillLevel: 'beginner' | 'intermediate' | 'advanced';
+  goals: string[];
 }
 
 export interface AuthContextType {
@@ -52,7 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [user]);
 
-  const signup = async (data: SignupData): Promise<void> => {
+  const signup = useCallback(async (data: SignupData): Promise<void> => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -64,20 +74,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       throw new Error('User with this email already exists');
     }
 
+    // Hash password before storing
+    const passwordHash = await hashPassword(data.password);
+
     // Create new user with 50 initial credits
     const newUser: User = {
       id: `user-${Date.now()}`,
       name: data.name,
       email: data.email,
       creditBalance: 50,
-      skillLevel: 'beginner' as SkillLevel,
+      skillLevel: data.skillLevel as SkillLevel,
       createdAt: new Date(),
     };
 
-    // Store user credentials for login
+    // Store user credentials for login with hashed password
     const userCredentials = {
       email: data.email,
-      password: data.password,
+      password: passwordHash,
       userId: newUser.id,
     };
 
@@ -91,17 +104,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.setItem('allUsers', JSON.stringify(allUsers));
 
     setUser(newUser);
-  };
+  }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = useCallback(async (email: string, password: string): Promise<void> => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Hash password for comparison
+    const passwordHash = await hashPassword(password);
 
     const existingUsers = localStorage.getItem('users');
     const users = existingUsers ? JSON.parse(existingUsers) : [];
 
     const userCredentials = users.find(
-      (u: any) => u.email === email && u.password === password
+      (u: any) => u.email === email && u.password === passwordHash
     );
 
     if (!userCredentials) {
@@ -148,14 +164,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     setUser(userData);
-  };
+  }, []);
 
-  const logout = (): void => {
+  const logout = useCallback((): void => {
     setUser(null);
     localStorage.removeItem('user');
-  };
+  }, []);
 
-  const refreshUser = (): void => {
+  const refreshUser = useCallback((): void => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
@@ -168,7 +184,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } else {
       setUser(null);
     }
-  };
+  }, []);
 
   const value: AuthContextType = useMemo(
     () => ({
@@ -180,7 +196,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logout,
       refreshUser,
     }),
-    [user, isLoading]
+    [user, isLoading, signup, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

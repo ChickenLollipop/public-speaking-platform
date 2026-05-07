@@ -26,7 +26,9 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/dashboard');
     } catch (err) {
-      setError('Invalid email or password');
+      console.error('Login failed:', err);
+      const message = err instanceof Error ? err.message : 'Invalid email or password';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -67,10 +69,10 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <p className="text-sm text-red-500">{error}</p>
+          <p className="text-sm text-red-500" role="alert" aria-live="assertive">{error}</p>
         )}
 
-        <Button type="submit" className="w-full" loading={isLoading}>
+        <Button type="submit" className="w-full" isLoading={isLoading}>
           Sign In
         </Button>
 
