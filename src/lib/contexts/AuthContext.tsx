@@ -1,18 +1,12 @@
 'use client';
 
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { User, SkillLevel } from '../types';
 
 export interface SignupData {
   name: string;
   email: string;
   password: string;
-}
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  credits: number;
 }
 
 export interface AuthContextType {
@@ -75,7 +69,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       id: `user-${Date.now()}`,
       name: data.name,
       email: data.email,
-      credits: 50,
+      creditBalance: 50,
+      skillLevel: 'beginner' as SkillLevel,
+      createdAt: new Date(),
     };
 
     // Store user credentials for login
@@ -87,6 +83,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     users.push(userCredentials);
     localStorage.setItem('users', JSON.stringify(users));
+
+    // Store user data for future logins
+    const allStoredUsers = localStorage.getItem('allUsers');
+    const allUsers = allStoredUsers ? JSON.parse(allStoredUsers) : {};
+    allUsers[newUser.id] = newUser;
+    localStorage.setItem('allUsers', JSON.stringify(allUsers));
 
     setUser(newUser);
   };
@@ -106,29 +108,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
       throw new Error('Invalid email or password');
     }
 
-    // Retrieve or create user data
-    const storedUser = localStorage.getItem('user');
+    // Retrieve user data from stored users list
+    const allStoredUsers = localStorage.getItem('allUsers');
+    const allUsers = allStoredUsers ? JSON.parse(allStoredUsers) : {};
+
     let userData: User;
 
-    if (storedUser) {
-      userData = JSON.parse(storedUser);
-      // Verify it's the same user
-      if (userData.id !== userCredentials.userId) {
-        // Different user, create new session
-        userData = {
-          id: userCredentials.userId,
-          name: email.split('@')[0], // Use email prefix as fallback name
-          email: userCredentials.email,
-          credits: 50,
-        };
-      }
+    // Check if we have stored data for this user
+    if (allUsers[userCredentials.userId]) {
+      userData = allUsers[userCredentials.userId];
     } else {
+      // Create new user data - try to get name from signup or use email prefix
+      const storedUser = localStorage.getItem('user');
+      let storedName = email.split('@')[0];
+
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (parsed.id === userCredentials.userId && parsed.name) {
+            storedName = parsed.name;
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+
       userData = {
         id: userCredentials.userId,
-        name: email.split('@')[0],
+        name: storedName,
         email: userCredentials.email,
-        credits: 50,
+        creditBalance: 50,
+        skillLevel: 'beginner' as SkillLevel,
+        createdAt: new Date(),
       };
+
+      // Store user data for future logins
+      allUsers[userCredentials.userId] = userData;
+      localStorage.setItem('allUsers', JSON.stringify(allUsers));
     }
 
     setUser(userData);
@@ -154,15 +170,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const value: AuthContextType = {
-    user,
-    isAuthenticated: !!user,
-    isLoading,
-    signup,
-    login,
-    logout,
-    refreshUser,
-  };
+  const value: AuthContextType = useMemo(
+    () => ({
+      user,
+      isAuthenticated: !!user,
+      isLoading,
+      signup,
+      login,
+      logout,
+      refreshUser,
+    }),
+    [user, isLoading]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

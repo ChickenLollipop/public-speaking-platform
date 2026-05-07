@@ -5,7 +5,9 @@
 export function validateEmail(email: string): string | null {
   if (!email) return 'Email is required';
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // More robust email validation regex
+  // Requires: local part (1+ chars), @, domain (2+ chars), dot, TLD (2+ chars)
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
   if (!emailRegex.test(email.trim())) {
     return 'Invalid email format';
   }
