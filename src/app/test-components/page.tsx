@@ -45,6 +45,12 @@ export default function TestComponentsPage() {
               helperText="This is helper text"
             />
             <Input
+              label="Required Input"
+              placeholder="This field is required..."
+              required
+              helperText="Notice the red asterisk in the label"
+            />
+            <Input
               label="Password Input"
               type="password"
               placeholder="Enter password..."
@@ -79,12 +85,27 @@ export default function TestComponentsPage() {
         {/* Badge Component */}
         <Card>
           <h2 className="text-xl font-semibold mb-4">Badge Component</h2>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="success">Success</Badge>
-            <Badge variant="warning">Warning</Badge>
-            <Badge variant="error">Error</Badge>
-            <Badge variant="info">Info</Badge>
-            <Badge variant="neutral">Neutral</Badge>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Medium size (default)</p>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="success" size="md">Success</Badge>
+                <Badge variant="warning" size="md">Warning</Badge>
+                <Badge variant="danger" size="md">Danger</Badge>
+                <Badge variant="info" size="md">Info</Badge>
+                <Badge variant="neutral" size="md">Neutral</Badge>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Small size</p>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="success" size="sm">Success</Badge>
+                <Badge variant="warning" size="sm">Warning</Badge>
+                <Badge variant="danger" size="sm">Danger</Badge>
+                <Badge variant="info" size="sm">Info</Badge>
+                <Badge variant="neutral" size="sm">Neutral</Badge>
+              </div>
+            </div>
           </div>
         </Card>
 
