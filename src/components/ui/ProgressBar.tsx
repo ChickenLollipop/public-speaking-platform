@@ -39,11 +39,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       <div className={`w-full bg-gray-200 rounded-full overflow-hidden ${sizeStyles[size]}`}>
         {indeterminate ? (
           <div
-            className={`${sizeStyles[size]} ${colorStyles[color]} rounded-full`}
-            style={{
-              width: '30%',
-              animation: 'indeterminate 1.5s ease-in-out infinite'
-            }}
+            className={`${sizeStyles[size]} ${colorStyles[color]} rounded-full animate-indeterminate`}
           />
         ) : (
           <div

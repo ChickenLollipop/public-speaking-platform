@@ -27,3 +27,8 @@ body {
     transform: translateX(400%);
   }
 }
+
+.animate-indeterminate {
+  animation: indeterminate 1.5s ease-in-out infinite;
+  width: 30%;
+}
