@@ -77,8 +77,8 @@ export const saveVideoBlob = async (
     throw new Error('IndexedDB is not available');
   }
 
+  const db = await openDB();
   try {
-    const db = await openDB();
     const transaction = db.transaction([STORES.VIDEOS], 'readwrite');
     const store = transaction.objectStore(STORES.VIDEOS);
 
@@ -92,19 +92,23 @@ export const saveVideoBlob = async (
     return new Promise((resolve, reject) => {
       const request = store.put(videoBlob);
 
-      request.onsuccess = () => {
-        db.close();
+      request.onerror = () => {
+        reject(new Error('Failed to save video blob'));
+      };
+
+      transaction.oncomplete = () => {
         resolve();
       };
 
-      request.onerror = () => {
-        db.close();
-        reject(new Error('Failed to save video blob'));
+      transaction.onerror = () => {
+        reject(new Error('Transaction failed while saving video blob'));
       };
     });
   } catch (error) {
     console.error('Error saving video blob:', error);
     throw error;
+  } finally {
+    db.close();
   }
 };
 
@@ -113,8 +117,8 @@ export const getVideoBlob = async (presentationId: string): Promise<VideoBlob | 
     throw new Error('IndexedDB is not available');
   }
 
+  const db = await openDB();
   try {
-    const db = await openDB();
     const transaction = db.transaction([STORES.VIDEOS], 'readonly');
     const store = transaction.objectStore(STORES.VIDEOS);
 
@@ -122,7 +126,6 @@ export const getVideoBlob = async (presentationId: string): Promise<VideoBlob | 
       const request = store.get(presentationId);
 
       request.onsuccess = () => {
-        db.close();
         const result = request.result;
         if (result) {
           // Convert savedAt back to Date object
@@ -132,13 +135,14 @@ export const getVideoBlob = async (presentationId: string): Promise<VideoBlob | 
       };
 
       request.onerror = () => {
-        db.close();
         reject(new Error('Failed to get video blob'));
       };
     });
   } catch (error) {
     console.error('Error getting video blob:', error);
     throw error;
+  } finally {
+    db.close();
   }
 };
 
@@ -147,27 +151,31 @@ export const deleteVideoBlob = async (presentationId: string): Promise<void> => 
     throw new Error('IndexedDB is not available');
   }
 
+  const db = await openDB();
   try {
-    const db = await openDB();
     const transaction = db.transaction([STORES.VIDEOS], 'readwrite');
     const store = transaction.objectStore(STORES.VIDEOS);
 
     return new Promise((resolve, reject) => {
       const request = store.delete(presentationId);
 
-      request.onsuccess = () => {
-        db.close();
+      request.onerror = () => {
+        reject(new Error('Failed to delete video blob'));
+      };
+
+      transaction.oncomplete = () => {
         resolve();
       };
 
-      request.onerror = () => {
-        db.close();
-        reject(new Error('Failed to delete video blob'));
+      transaction.onerror = () => {
+        reject(new Error('Transaction failed while deleting video blob'));
       };
     });
   } catch (error) {
     console.error('Error deleting video blob:', error);
     throw error;
+  } finally {
+    db.close();
   }
 };
 
@@ -180,27 +188,31 @@ export const saveAnalysis = async (analysis: AIAnalysis): Promise<void> => {
     throw new Error('IndexedDB is not available');
   }
 
+  const db = await openDB();
   try {
-    const db = await openDB();
     const transaction = db.transaction([STORES.ANALYSES], 'readwrite');
     const store = transaction.objectStore(STORES.ANALYSES);
 
     return new Promise((resolve, reject) => {
       const request = store.put(analysis);
 
-      request.onsuccess = () => {
-        db.close();
+      request.onerror = () => {
+        reject(new Error('Failed to save analysis'));
+      };
+
+      transaction.oncomplete = () => {
         resolve();
       };
 
-      request.onerror = () => {
-        db.close();
-        reject(new Error('Failed to save analysis'));
+      transaction.onerror = () => {
+        reject(new Error('Transaction failed while saving analysis'));
       };
     });
   } catch (error) {
     console.error('Error saving analysis:', error);
     throw error;
+  } finally {
+    db.close();
   }
 };
 
@@ -209,8 +221,8 @@ export const getAnalysis = async (analysisId: string): Promise<AIAnalysis | null
     throw new Error('IndexedDB is not available');
   }
 
+  const db = await openDB();
   try {
-    const db = await openDB();
     const transaction = db.transaction([STORES.ANALYSES], 'readonly');
     const store = transaction.objectStore(STORES.ANALYSES);
 
@@ -218,7 +230,6 @@ export const getAnalysis = async (analysisId: string): Promise<AIAnalysis | null
       const request = store.get(analysisId);
 
       request.onsuccess = () => {
-        db.close();
         const result = request.result;
         if (result) {
           // Convert createdAt back to Date object
@@ -228,13 +239,14 @@ export const getAnalysis = async (analysisId: string): Promise<AIAnalysis | null
       };
 
       request.onerror = () => {
-        db.close();
         reject(new Error('Failed to get analysis'));
       };
     });
   } catch (error) {
     console.error('Error getting analysis:', error);
     throw error;
+  } finally {
+    db.close();
   }
 };
 
@@ -245,8 +257,8 @@ export const getAnalysesByPresentationId = async (
     throw new Error('IndexedDB is not available');
   }
 
+  const db = await openDB();
   try {
-    const db = await openDB();
     const transaction = db.transaction([STORES.ANALYSES], 'readonly');
     const store = transaction.objectStore(STORES.ANALYSES);
     const index = store.index('presentationId');
@@ -255,7 +267,6 @@ export const getAnalysesByPresentationId = async (
       const request = index.getAll(presentationId);
 
       request.onsuccess = () => {
-        db.close();
         const results = request.result || [];
         // Convert createdAt back to Date objects
         results.forEach((result) => {
@@ -265,13 +276,14 @@ export const getAnalysesByPresentationId = async (
       };
 
       request.onerror = () => {
-        db.close();
         reject(new Error('Failed to get analyses by presentation ID'));
       };
     });
   } catch (error) {
     console.error('Error getting analyses by presentation ID:', error);
     throw error;
+  } finally {
+    db.close();
   }
 };
 
@@ -280,26 +292,30 @@ export const deleteAnalysis = async (analysisId: string): Promise<void> => {
     throw new Error('IndexedDB is not available');
   }
 
+  const db = await openDB();
   try {
-    const db = await openDB();
     const transaction = db.transaction([STORES.ANALYSES], 'readwrite');
     const store = transaction.objectStore(STORES.ANALYSES);
 
     return new Promise((resolve, reject) => {
       const request = store.delete(analysisId);
 
-      request.onsuccess = () => {
-        db.close();
+      request.onerror = () => {
+        reject(new Error('Failed to delete analysis'));
+      };
+
+      transaction.oncomplete = () => {
         resolve();
       };
 
-      request.onerror = () => {
-        db.close();
-        reject(new Error('Failed to delete analysis'));
+      transaction.onerror = () => {
+        reject(new Error('Transaction failed while deleting analysis'));
       };
     });
   } catch (error) {
     console.error('Error deleting analysis:', error);
     throw error;
+  } finally {
+    db.close();
   }
 };

@@ -18,6 +18,36 @@ const isBrowser = (): boolean => {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 };
 
+// Simple locking mechanism to prevent race conditions in read-modify-write operations
+let presentationsLock = false;
+const lockQueue: Array<() => void> = [];
+
+/**
+ * Acquire lock for presentations operations
+ */
+const acquireLock = async (): Promise<void> => {
+  return new Promise((resolve) => {
+    if (!presentationsLock) {
+      presentationsLock = true;
+      resolve();
+    } else {
+      lockQueue.push(resolve);
+    }
+  });
+};
+
+/**
+ * Release lock and process queue
+ */
+const releaseLock = (): void => {
+  const next = lockQueue.shift();
+  if (next) {
+    next();
+  } else {
+    presentationsLock = false;
+  }
+};
+
 // ============================================================================
 // User Storage
 // ============================================================================
@@ -131,9 +161,10 @@ export const getPresentationsFromStorage = (): Presentation[] => {
   }
 };
 
-export const savePresentationToStorage = (presentation: Presentation): void => {
+export const savePresentationToStorage = async (presentation: Presentation): Promise<void> => {
   if (!isBrowser()) return;
 
+  await acquireLock();
   try {
     const presentations = getPresentationsFromStorage();
     const existingIndex = presentations.findIndex((p) => p.id === presentation.id);
@@ -152,6 +183,8 @@ export const savePresentationToStorage = (presentation: Presentation): void => {
     localStorage.setItem(STORAGE_KEYS.PRESENTATIONS, JSON.stringify(presentations));
   } catch (error) {
     console.error('Error saving presentation to storage:', error);
+  } finally {
+    releaseLock();
   }
 };
 
@@ -167,12 +200,13 @@ export const getPresentationById = (id: string): Presentation | null => {
   }
 };
 
-export const updatePresentationStatus = (
+export const updatePresentationStatus = async (
   id: string,
   status: Presentation['status']
-): void => {
+): Promise<void> => {
   if (!isBrowser()) return;
 
+  await acquireLock();
   try {
     const presentations = getPresentationsFromStorage();
     const presentation = presentations.find((p) => p.id === id);
@@ -184,17 +218,22 @@ export const updatePresentationStatus = (
     }
   } catch (error) {
     console.error('Error updating presentation status:', error);
+  } finally {
+    releaseLock();
   }
 };
 
-export const deletePresentationFromStorage = (id: string): void => {
+export const deletePresentationFromStorage = async (id: string): Promise<void> => {
   if (!isBrowser()) return;
 
+  await acquireLock();
   try {
     const presentations = getPresentationsFromStorage();
     const filtered = presentations.filter((p) => p.id !== id);
     localStorage.setItem(STORAGE_KEYS.PRESENTATIONS, JSON.stringify(filtered));
   } catch (error) {
     console.error('Error deleting presentation from storage:', error);
+  } finally {
+    releaseLock();
   }
 };
