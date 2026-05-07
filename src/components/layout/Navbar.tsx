@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
+import { CreditBalance } from '@/components/CreditBalance';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -22,12 +23,7 @@ export function Navbar() {
                 <span className="text-sm text-gray-700 hidden sm:inline">
                   {user.name}
                 </span>
-                <div className="text-sm">
-                  <span className="text-gray-600">Credits: </span>
-                  <span className="font-semibold text-gray-900">
-                    {user.creditBalance}
-                  </span>
-                </div>
+                <CreditBalance balance={user.creditBalance} variant="compact" />
                 <Button
                   variant="ghost"
                   size="sm"
