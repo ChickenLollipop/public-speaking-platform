@@ -39,7 +39,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       <div className={`w-full bg-gray-200 rounded-full overflow-hidden ${sizeStyles[size]}`}>
         {indeterminate ? (
           <div
-            className={`${sizeStyles[size]} ${colorStyles[color]} rounded-full animate-indeterminate`}
+            className={`${sizeStyles[size]} ${colorStyles[color]} rounded-full`}
             style={{
               width: '30%',
               animation: 'indeterminate 1.5s ease-in-out infinite'
@@ -61,16 +61,6 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
           {Math.round(percentage)}%
         </div>
       )}
-      <style jsx>{`
-        @keyframes indeterminate {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(400%);
-          }
-        }
-      `}</style>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -17,6 +17,8 @@ export const Modal: React.FC<ModalProps> = ({
   size = 'md',
   showCloseButton = true
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -24,13 +26,46 @@ export const Modal: React.FC<ModalProps> = ({
       }
     };
 
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (!isOpen || e.key !== 'Tab' || !modalRef.current) return;
+
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    };
+
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
+      document.addEventListener('keydown', handleTabKey);
       document.body.style.overflow = 'hidden';
+
+      // Focus first focusable element on open
+      setTimeout(() => {
+        const focusableElements = modalRef.current?.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements?.[0] as HTMLElement;
+        firstElement?.focus();
+      }, 0);
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('keydown', handleTabKey);
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
@@ -59,7 +94,7 @@ export const Modal: React.FC<ModalProps> = ({
       />
 
       {/* Modal */}
-      <div className={`relative bg-white rounded-lg shadow-xl ${sizeStyles[size]} w-full max-h-[90vh] overflow-auto`}>
+      <div ref={modalRef} className={`relative bg-white rounded-lg shadow-xl ${sizeStyles[size]} w-full max-h-[90vh] overflow-auto`}>
         {/* Header */}
         {(title || showCloseButton) && (
           <div className="flex items-center justify-between p-6 border-b border-gray-200">

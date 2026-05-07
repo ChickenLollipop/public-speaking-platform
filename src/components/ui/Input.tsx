@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -16,7 +16,8 @@ export const Input: React.FC<InputProps> = ({
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id || generatedId;
   const isPassword = type === 'password';
   const inputType = isPassword && showPassword ? 'text' : type;
 
