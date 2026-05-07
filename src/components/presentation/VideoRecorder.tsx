@@ -49,10 +49,21 @@ export const VideoRecorder: React.FC<VideoRecorderProps> = ({
       const url = URL.createObjectURL(videoBlob);
       previewVideoRef.current.src = url;
 
+      // Cleanup function that revokes the URL when videoBlob changes or component unmounts
       return () => {
         URL.revokeObjectURL(url);
       };
     }
+
+    // If videoBlob is cleared, ensure we don't leak any previous URL
+    return () => {
+      if (previewVideoRef.current?.src) {
+        const currentSrc = previewVideoRef.current.src;
+        if (currentSrc.startsWith('blob:')) {
+          URL.revokeObjectURL(currentSrc);
+        }
+      }
+    };
   }, [videoBlob]);
 
   // Recording timer
@@ -91,6 +102,14 @@ export const VideoRecorder: React.FC<VideoRecorderProps> = ({
   // Handle video ended event
   const handleVideoEnded = () => {
     setIsPlaying(false);
+  };
+
+  // Handle keyboard events for video controls
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === ' ' || event.key === 'Spacebar') {
+      event.preventDefault();
+      togglePlayPause();
+    }
   };
 
   // Handle accept recording
@@ -183,6 +202,8 @@ export const VideoRecorder: React.FC<VideoRecorderProps> = ({
               muted
               playsInline
               className="w-full aspect-video"
+              aria-label="Live camera feed during recording"
+              title="Live camera feed during recording"
             />
 
             {/* Recording indicator */}
@@ -216,13 +237,18 @@ export const VideoRecorder: React.FC<VideoRecorderProps> = ({
               playsInline
               className="w-full aspect-video"
               onEnded={handleVideoEnded}
+              aria-label="Preview of recorded presentation video"
+              title="Preview of recorded presentation video"
             />
 
             {/* Custom play/pause button overlay */}
             <div className="absolute inset-0 flex items-center justify-center">
               <button
+                type="button"
                 onClick={togglePlayPause}
-                className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all"
+                onKeyDown={handleKeyDown}
+                aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50"
               >
                 {isPlaying ? (
                   <svg
@@ -248,8 +274,11 @@ export const VideoRecorder: React.FC<VideoRecorderProps> = ({
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={togglePlayPause}
-                  className="text-white hover:text-gray-300 transition-colors"
+                  onKeyDown={handleKeyDown}
+                  aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                  className="text-white hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-75 rounded"
                 >
                   {isPlaying ? (
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
