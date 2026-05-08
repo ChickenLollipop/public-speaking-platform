@@ -24,7 +24,12 @@ export const submitFeedbackSchema = z.object({
   deliveryRating: z.number().int().min(1).max(5),
   contentRating: z.number().int().min(1).max(5),
   overallRating: z.number().int().min(1).max(5),
-  writtenFeedback: z.string().min(50, 'Feedback must be at least 50 characters'),
+  writtenFeedback: z
+    .string()
+    .refine(
+      (val) => val.trim().split(/\s+/).filter(Boolean).length >= 50,
+      { message: 'Feedback must be at least 50 words' }
+    ),
   timestampComments: z
     .array(
       z.object({

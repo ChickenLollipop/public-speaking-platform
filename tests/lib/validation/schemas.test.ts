@@ -88,12 +88,13 @@ describe('Validation schemas', () => {
   });
 
   describe('submitFeedbackSchema', () => {
-    it('should validate feedback submission', () => {
+    it('should validate feedback submission with enough words', () => {
       const data = {
         deliveryRating: 4,
         contentRating: 5,
         overallRating: 4,
-        writtenFeedback: 'Great job! Your delivery was clear and the content was well-structured.',
+        writtenFeedback:
+          'This presentation was excellent overall the delivery was clear and engaging your content was well organized and easy to follow the examples you provided really helped illustrate the key points throughout your discussion and I appreciated the way you structured the conclusion to summarize everything effectively and provided thought provoking insights',
         timestampComments: [
           { time: 30, comment: 'Good opening' },
           { time: 120, comment: 'Strong conclusion' },
@@ -109,19 +110,20 @@ describe('Validation schemas', () => {
         deliveryRating: 6,
         contentRating: 5,
         overallRating: 4,
-        writtenFeedback: 'Great job!',
+        writtenFeedback:
+          'This presentation was excellent overall the delivery was clear and engaging your content was well organized and easy to follow the examples you provided really helped illustrate the key points throughout your discussion and I appreciated the way you structured the conclusion to summarize everything effectively and provided thought provoking insights',
       };
 
       const result = submitFeedbackSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
 
-    it('should reject feedback shorter than 50 characters', () => {
+    it('should reject feedback with fewer than 50 words', () => {
       const data = {
         deliveryRating: 4,
         contentRating: 5,
         overallRating: 4,
-        writtenFeedback: 'Good',
+        writtenFeedback: 'Good job keep it up',
       };
 
       const result = submitFeedbackSchema.safeParse(data);
