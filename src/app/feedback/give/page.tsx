@@ -18,7 +18,7 @@ interface FeedbackRequestItem {
 }
 
 function formatDuration(seconds: number | null): string {
-  if (!seconds) return 'Unknown';
+  if (seconds == null) return 'Unknown';
   return `${Math.round(seconds / 60)} min`;
 }
 
@@ -28,29 +28,39 @@ export default function GiveFeedbackPage() {
   const [loading, setLoading] = useState(true);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<{ [id: string]: string }>({});
+  const [fetchError, setFetchError] = useState<string>('');
   const [length, setLength] = useState<string>('');
   const [sort, setSort] = useState<string>('credits_desc');
 
   useEffect(() => {
     async function fetchRequests() {
       setLoading(true);
+      setFetchError('');
       const params = new URLSearchParams();
       if (length) params.set('length', length);
       if (sort) params.set('sort', sort);
 
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/feedback-requests?${params.toString()}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/feedback-requests?${params.toString()}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
 
-      if (res.status === 401) {
-        router.push('/');
-        return;
+        if (res.status === 401) {
+          router.push('/');
+          return;
+        }
+
+        if (!res.ok) {
+          setFetchError('Failed to load feedback requests. Please try again.');
+          return;
+        }
+
+        const data = await res.json();
+        setRequests(data.feedbackRequests ?? []);
+      } finally {
+        setLoading(false);
       }
-
-      const data = await res.json();
-      setRequests(data.feedbackRequests ?? []);
-      setLoading(false);
     }
 
     fetchRequests();
@@ -100,6 +110,12 @@ export default function GiveFeedbackPage() {
             Help others improve their presentations and earn credits.
           </p>
         </div>
+
+        {fetchError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-700 text-sm">{fetchError}</p>
+          </div>
+        )}
 
         {/* Filter bar */}
         <div className="flex gap-4 mb-6">
@@ -167,7 +183,7 @@ export default function GiveFeedbackPage() {
                 )}
                 <button
                   onClick={() => handleClaim(req.id)}
-                  disabled={claimingId === req.id}
+                  disabled={claimingId !== null}
                   className="w-full py-2 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   {claimingId === req.id ? 'Claiming...' : 'Claim & Give Feedback'}
