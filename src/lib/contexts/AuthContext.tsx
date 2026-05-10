@@ -3,14 +3,6 @@
 import React, { createContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { User, SkillLevel } from '../types';
 
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
 export interface SignupData {
   name: string;
   email: string;
@@ -35,155 +27,125 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+function mapSkillLevel(level: string): SkillLevel {
+  const map: Record<string, SkillLevel> = {
+    BEGINNER: 'beginner',
+    INTERMEDIATE: 'intermediate',
+    ADVANCED: 'advanced',
+  };
+  return map[level] || 'beginner';
+}
+
+function mapUser(apiUser: any): User {
+  return {
+    id: apiUser.id,
+    email: apiUser.email,
+    name: apiUser.name,
+    creditBalance: apiUser.creditBalance,
+    skillLevel: mapSkillLevel(apiUser.skillLevel),
+    goals: apiUser.goals,
+    createdAt: new Date(apiUser.createdAt),
+  };
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse stored user:', error);
-        localStorage.removeItem('user');
-      }
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false);
+
+    fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          setUser(mapUser(data.user));
+        } else {
+          localStorage.removeItem('token');
+        }
+      })
+      .catch(() => {
+        localStorage.removeItem('token');
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
-  // Save user to localStorage whenever it changes
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
-  }, [user]);
-
   const signup = useCallback(async (data: SignupData): Promise<void> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        skillLevel: data.skillLevel.toUpperCase(),
+        goals: data.goals,
+      }),
+    });
 
-    // Check if user already exists
-    const existingUsers = localStorage.getItem('users');
-    const users = existingUsers ? JSON.parse(existingUsers) : [];
+    const body = await res.json();
 
-    if (users.find((u: any) => u.email === data.email)) {
-      throw new Error('User with this email already exists');
+    if (!res.ok) {
+      throw new Error(body.error || 'Signup failed');
     }
 
-    // Hash password before storing
-    const passwordHash = await hashPassword(data.password);
-
-    // Create new user with 50 initial credits
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      name: data.name,
-      email: data.email,
-      creditBalance: 50,
-      skillLevel: data.skillLevel as SkillLevel,
-      createdAt: new Date(),
-    };
-
-    // Store user credentials for login with hashed password
-    const userCredentials = {
-      email: data.email,
-      password: passwordHash,
-      userId: newUser.id,
-    };
-
-    users.push(userCredentials);
-    localStorage.setItem('users', JSON.stringify(users));
-
-    // Store user data for future logins
-    const allStoredUsers = localStorage.getItem('allUsers');
-    const allUsers = allStoredUsers ? JSON.parse(allStoredUsers) : {};
-    allUsers[newUser.id] = newUser;
-    localStorage.setItem('allUsers', JSON.stringify(allUsers));
-
-    setUser(newUser);
+    localStorage.setItem('token', body.token);
+    setUser(mapUser(body.user));
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<void> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-    // Hash password for comparison
-    const passwordHash = await hashPassword(password);
+    const body = await res.json();
 
-    const existingUsers = localStorage.getItem('users');
-    const users = existingUsers ? JSON.parse(existingUsers) : [];
-
-    const userCredentials = users.find(
-      (u: any) => u.email === email && u.password === passwordHash
-    );
-
-    if (!userCredentials) {
-      throw new Error('Invalid email or password');
+    if (!res.ok) {
+      throw new Error(body.error || 'Invalid email or password');
     }
 
-    // Retrieve user data from stored users list
-    const allStoredUsers = localStorage.getItem('allUsers');
-    const allUsers = allStoredUsers ? JSON.parse(allStoredUsers) : {};
-
-    let userData: User;
-
-    // Check if we have stored data for this user
-    if (allUsers[userCredentials.userId]) {
-      userData = allUsers[userCredentials.userId];
-    } else {
-      // Create new user data - try to get name from signup or use email prefix
-      const storedUser = localStorage.getItem('user');
-      let storedName = email.split('@')[0];
-
-      if (storedUser) {
-        try {
-          const parsed = JSON.parse(storedUser);
-          if (parsed.id === userCredentials.userId && parsed.name) {
-            storedName = parsed.name;
-          }
-        } catch (e) {
-          // Ignore parse errors
-        }
-      }
-
-      userData = {
-        id: userCredentials.userId,
-        name: storedName,
-        email: userCredentials.email,
-        creditBalance: 50,
-        skillLevel: 'beginner' as SkillLevel,
-        createdAt: new Date(),
-      };
-
-      // Store user data for future logins
-      allUsers[userCredentials.userId] = userData;
-      localStorage.setItem('allUsers', JSON.stringify(allUsers));
-    }
-
-    setUser(userData);
+    localStorage.setItem('token', body.token);
+    setUser(mapUser(body.user));
   }, []);
 
   const logout = useCallback((): void => {
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem('token');
   }, []);
 
   const refreshUser = useCallback((): void => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse stored user:', error);
-        localStorage.removeItem('user');
-        setUser(null);
-      }
-    } else {
+    const token = localStorage.getItem('token');
+    if (!token) {
       setUser(null);
+      return;
     }
+
+    fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          setUser(mapUser(data.user));
+        } else {
+          localStorage.removeItem('token');
+          setUser(null);
+        }
+      })
+      .catch(() => {
+        localStorage.removeItem('token');
+        setUser(null);
+      });
   }, []);
 
   const value: AuthContextType = useMemo(

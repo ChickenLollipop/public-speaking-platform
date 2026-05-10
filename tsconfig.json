@@ -23,13 +23,7 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-<<<<<<< Updated upstream
       "@/*": ["./src/*"]
-    }
-=======
-      "@/*": [
-        "./src/*"
-      ]
     },
     "allowJs": true,
     "incremental": true,
@@ -39,17 +33,11 @@
         "name": "next"
       }
     ]
->>>>>>> Stashed changes
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
   ],
   "exclude": [
     "node_modules"

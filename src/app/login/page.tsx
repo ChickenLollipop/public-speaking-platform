@@ -44,7 +44,7 @@ export default function LoginPage() {
           label="Email"
           type="email"
           value={email}
-          onChange={setEmail}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
           required
         />
@@ -53,7 +53,7 @@ export default function LoginPage() {
           label="Password"
           type="password"
           value={password}
-          onChange={setPassword}
+          onChange={(e) => setPassword(e.target.value)}
           placeholder="Your password"
           required
         />
