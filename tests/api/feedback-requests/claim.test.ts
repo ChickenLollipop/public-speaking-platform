@@ -58,6 +58,10 @@ describe('POST /api/feedback-requests/[id]/claim', () => {
     expect(data.feedbackRequest.presentation.title).toBe('Test Presentation');
     expect(data.feedbackRequest.presentation.duration).toBe(300);
     expect(data.feedbackRequest.presentation.user.name).toBe('Requester');
+    expect(data.feedbackRequest.presentation.videoUrl).toBe('videos/test-user/1234-abc.mp4');
+    expect(data.feedbackRequest.presentation.description).toBe('A test presentation');
+    expect(data.feedbackRequest.presentation.user.skillLevel).toBe('BEGINNER');
+    expect(data.feedbackRequest.presentation.user.goals).toEqual(['job_interviews']);
 
     const updated = await testDb.feedbackRequest.findUnique({
       where: { id: feedbackRequest.id },
