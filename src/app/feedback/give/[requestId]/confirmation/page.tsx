@@ -1,11 +1,12 @@
+import Link from 'next/link';
+
 interface PageProps {
-  params: Promise<{ requestId: string }>;
   searchParams: Promise<{ credits?: string }>;
 }
 
 export default async function ConfirmationPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
-  const creditsEarned = parseInt(resolvedSearchParams.credits ?? '0', 10);
+  const creditsEarned = parseInt(resolvedSearchParams.credits ?? '0', 10) || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -32,18 +33,18 @@ export default async function ConfirmationPage({ searchParams }: PageProps) {
         </div>
 
         <div className="flex gap-3">
-          <a
+          <Link
             href="/feedback/give"
             className="flex-1 py-3 px-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition text-center"
           >
             Give More Feedback
-          </a>
-          <a
+          </Link>
+          <Link
             href="/dashboard"
             className="flex-1 py-3 px-4 bg-white text-gray-700 font-semibold rounded-lg border-2 border-gray-200 hover:bg-gray-50 transition text-center"
           >
             Go to Dashboard
-          </a>
+          </Link>
         </div>
       </div>
     </div>
