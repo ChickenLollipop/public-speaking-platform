@@ -149,6 +149,31 @@ describe('POST /api/feedback-requests/[id]/submit', () => {
     expect(response.status).toBe(400);
   });
 
+  it('should reject invalid feedback (rating out of range)', async () => {
+    const { reviewer, feedbackRequest } = await setup();
+    const token = await signToken({ userId: reviewer.id, email: reviewer.email });
+
+    const request = new Request(
+      `http://localhost:3000/api/feedback-requests/${feedbackRequest.id}/submit`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          deliveryRating: 6,
+          contentRating: 5,
+          overallRating: 4,
+          writtenFeedback: FIFTY_WORDS,
+        }),
+      }
+    );
+
+    const response = await POST(request, { params: Promise.resolve({ id: feedbackRequest.id }) });
+    expect(response.status).toBe(400);
+  });
+
   it('should return 401 for unauthenticated request', async () => {
     const { feedbackRequest } = await setup();
     const request = new Request(
