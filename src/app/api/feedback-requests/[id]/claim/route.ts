@@ -4,9 +4,10 @@ import { authenticate } from '@/lib/auth/middleware';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const auth = await authenticate(request);
     if (!auth.success || !auth.user) {
       return NextResponse.json({ error: auth.error }, { status: 401 });
@@ -14,7 +15,7 @@ export async function POST(
 
     // First do a lightweight check for 404 and 403
     const existing = await db.feedbackRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { requesterId: true, status: true },
     });
 
@@ -33,13 +34,16 @@ export async function POST(
     // Atomic update — only succeeds if still PENDING
     try {
       const updated = await db.feedbackRequest.update({
-        where: { id: params.id, status: 'PENDING' },
+        where: { id, status: 'PENDING' },
         data: {
           status: 'CLAIMED',
           claimedBy: auth.user.userId,
           claimedAt: new Date(),
         },
-        include: {
+        select: {
+          id: true,
+          status: true,
+          creditsOffered: true,
           presentation: {
             select: {
               id: true,

@@ -55,6 +55,7 @@ describe('POST /api/feedback-requests/[id]/claim', () => {
 
     expect(response.status).toBe(200);
     expect(data.feedbackRequest.id).toBe(feedbackRequest.id);
+    expect(data.feedbackRequest.status).toBe('CLAIMED');
     expect(data.feedbackRequest.presentation.title).toBe('Test Presentation');
     expect(data.feedbackRequest.presentation.duration).toBe(300);
     expect(data.feedbackRequest.presentation.user.name).toBe('Requester');
