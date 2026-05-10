@@ -1,13 +1,16 @@
 # Stage 1: Dependencies - Install all dependencies
 FROM node:20-alpine AS dependencies
 
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Generate Prisma client
 COPY prisma ./prisma/
