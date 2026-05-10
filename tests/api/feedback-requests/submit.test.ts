@@ -211,4 +211,35 @@ describe('POST /api/feedback-requests/[id]/submit', () => {
     const response = await POST(request, { params: Promise.resolve({ id: 'non-existent' }) });
     expect(response.status).toBe(404);
   });
+
+  it('should reject submitting to an already-completed request', async () => {
+    const { reviewer, feedbackRequest } = await setup();
+    // Manually mark the request as COMPLETED
+    await testDb.feedbackRequest.update({
+      where: { id: feedbackRequest.id },
+      data: { status: 'COMPLETED' },
+    });
+
+    const token = await signToken({ userId: reviewer.id, email: reviewer.email });
+
+    const request = new Request(
+      `http://localhost:3000/api/feedback-requests/${feedbackRequest.id}/submit`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          deliveryRating: 4,
+          contentRating: 5,
+          overallRating: 4,
+          writtenFeedback: FIFTY_WORDS,
+        }),
+      }
+    );
+
+    const response = await POST(request, { params: Promise.resolve({ id: feedbackRequest.id }) });
+    expect(response.status).toBe(409);
+  });
 });

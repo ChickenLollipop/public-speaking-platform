@@ -31,6 +31,10 @@ export async function POST(
       return NextResponse.json({ error: 'You have not claimed this request' }, { status: 403 });
     }
 
+    if (feedbackRequest.status !== 'CLAIMED') {
+      return NextResponse.json({ error: 'Request is no longer available' }, { status: 409 });
+    }
+
     const body = await request.json();
     const validation = submitFeedbackSchema.safeParse(body);
     if (!validation.success) {
@@ -43,33 +47,40 @@ export async function POST(
     const { deliveryRating, contentRating, overallRating, writtenFeedback, timestampComments } =
       validation.data;
 
-    const wordCount = writtenFeedback.trim().split(/\s+/).filter(Boolean).length;
     const durationSeconds = feedbackRequest.presentation.duration ?? 0;
-    const earnings = calculateFeedbackEarnings(durationSeconds, wordCount, null);
+    const earnings = calculateFeedbackEarnings(durationSeconds, 0, null);
     const creditsEarned = Math.round(earnings.final);
 
-    const feedback = await db.$transaction(async (tx) => {
-      const created = await tx.feedback.create({
-        data: {
-          feedbackRequestId: feedbackRequest.id,
-          reviewerId: auth.user!.userId,
-          deliveryRating,
-          contentRating,
-          overallRating,
-          writtenFeedback,
-          timestampComments: timestampComments ?? [],
-          feedbackQualityScore: 0,
-          creditsEarned,
-        },
-      });
+    let feedback;
+    try {
+      feedback = await db.$transaction(async (tx) => {
+        const created = await tx.feedback.create({
+          data: {
+            feedbackRequestId: feedbackRequest.id,
+            reviewerId: auth.user!.userId,
+            deliveryRating,
+            contentRating,
+            overallRating,
+            writtenFeedback,
+            timestampComments: timestampComments ?? [],
+            feedbackQualityScore: 0,
+            creditsEarned,
+          },
+        });
 
-      await tx.feedbackRequest.update({
-        where: { id },
-        data: { status: 'COMPLETED' },
-      });
+        await tx.feedbackRequest.update({
+          where: { id, status: 'CLAIMED' },
+          data: { status: 'COMPLETED' },
+        });
 
-      return created;
-    });
+        return created;
+      });
+    } catch (err: any) {
+      if (err?.code === 'P2025') {
+        return NextResponse.json({ error: 'Request is no longer available' }, { status: 409 });
+      }
+      throw err;
+    }
 
     await createCreditTransaction(
       auth.user.userId,
