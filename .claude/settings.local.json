@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(npm test *)",
+      "Bash(node *)",
+      "Bash(timeout 5 psql -h 127.0.0.1 -p 5432 -U postgres -c \"SELECT 1\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(powershell.exe Get-Service -Name 'postgresql*' 2>&1 *)",
+      "Bash(powershell.exe *)",
+      "Bash(where psql *)",
+      "Bash(mkdir -p /tmp/pgtest_data)",
+      "Bash('/c/Program Files/PostgreSQL/18/bin/initdb.exe' -D /tmp/pgtest_data -U postgres --no-locale --encoding=UTF8)",
+      "Bash(docker context ls *)",
+      "Bash(docker context *)",
+      "Bash(docker -H npipe:////./pipe/dockerDesktopLinuxEngine ps)",
+      "Bash(pg_isready -h localhost -p 5432)",
+      "Bash(net start *)",
+      "Bash(sc query *)",
+      "Bash(npx tsc *)",
+      "Skill(code-review:code-review)",
+      "Bash(git *)"
+    ]
+  }
+}
