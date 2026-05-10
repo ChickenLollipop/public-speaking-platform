@@ -28,7 +28,6 @@ export async function GET(
             title: true,
             description: true,
             duration: true,
-            videoUrl: true,
             user: {
               select: { name: true, skillLevel: true, goals: true },
             },

@@ -3,7 +3,6 @@ import { db } from '@/lib/db';
 import { authenticate } from '@/lib/auth/middleware';
 import { submitFeedbackSchema } from '@/lib/validation/schemas';
 import { calculateFeedbackEarnings } from '@/lib/credits/calculate';
-import { createCreditTransaction } from '@/lib/credits/transaction';
 import { CreditTransactionType } from '@prisma/client';
 
 export async function POST(
@@ -44,27 +43,26 @@ export async function POST(
       );
     }
 
-    const { deliveryRating, contentRating, overallRating, writtenFeedback, timestampComments } =
-      validation.data;
-
-    const durationSeconds = feedbackRequest.presentation.duration ?? 0;
-    const earnings = calculateFeedbackEarnings(durationSeconds, 0, null);
-    const creditsEarned = Math.round(earnings.final);
-
-    let feedback;
+    let feedback: { id: string };
+    let creditsEarned: number;
     try {
-      feedback = await db.$transaction(async (tx) => {
+      ({ feedback, creditsEarned } = await db.$transaction(async (tx) => {
+        const wordCount = validation.data.writtenFeedback.trim().split(/\s+/).filter(Boolean).length;
+        const durationSeconds = feedbackRequest.presentation.duration ?? 0;
+        const earnings = calculateFeedbackEarnings(durationSeconds, wordCount, null);
+        const credits = Math.round(earnings.final);
+
         const created = await tx.feedback.create({
           data: {
             feedbackRequestId: feedbackRequest.id,
             reviewerId: auth.user!.userId,
-            deliveryRating,
-            contentRating,
-            overallRating,
-            writtenFeedback,
-            timestampComments: timestampComments ?? [],
+            deliveryRating: validation.data.deliveryRating,
+            contentRating: validation.data.contentRating,
+            overallRating: validation.data.overallRating,
+            writtenFeedback: validation.data.writtenFeedback,
+            timestampComments: validation.data.timestampComments ?? [],
             feedbackQualityScore: 0,
-            creditsEarned,
+            creditsEarned: credits,
           },
         });
 
@@ -73,21 +71,37 @@ export async function POST(
           data: { status: 'COMPLETED' },
         });
 
-        return created;
-      });
+        // Award credits atomically within the same transaction
+        const reviewer = await tx.user.findUnique({
+          where: { id: auth.user!.userId },
+          select: { creditBalance: true },
+        });
+        if (!reviewer) throw new Error('Reviewer not found');
+        const newBalance = reviewer.creditBalance + credits;
+
+        await tx.user.update({
+          where: { id: auth.user!.userId },
+          data: { creditBalance: newBalance },
+        });
+
+        await tx.creditTransaction.create({
+          data: {
+            userId: auth.user!.userId,
+            amount: credits,
+            type: CreditTransactionType.FEEDBACK_GIVEN,
+            relatedId: created.id,
+            balanceAfter: newBalance,
+          },
+        });
+
+        return { feedback: created, creditsEarned: credits };
+      }));
     } catch (err: any) {
       if (err?.code === 'P2025') {
         return NextResponse.json({ error: 'Request is no longer available' }, { status: 409 });
       }
       throw err;
     }
-
-    await createCreditTransaction(
-      auth.user.userId,
-      creditsEarned,
-      CreditTransactionType.FEEDBACK_GIVEN,
-      feedback.id
-    );
 
     return NextResponse.json({ feedback: { id: feedback.id }, creditsEarned });
   } catch (error) {

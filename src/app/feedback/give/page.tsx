@@ -70,24 +70,32 @@ export default function GiveFeedbackPage() {
     setClaimingId(requestId);
     setClaimError((prev) => ({ ...prev, [requestId]: '' }));
 
-    const token = localStorage.getItem('token');
-    const res = await fetch(`/api/feedback-requests/${requestId}/claim`, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/feedback-requests/${requestId}/claim`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
-    if (res.ok) {
-      router.push(`/feedback/give/${requestId}`);
-      return;
+      if (res.ok) {
+        router.push(`/feedback/give/${requestId}`);
+        return;
+      }
+
+      const data = await res.json().catch(() => ({ error: 'Failed to claim request' }));
+      setClaimError((prev) => ({
+        ...prev,
+        [requestId]: data.error ?? 'Failed to claim request',
+      }));
+      setRequests((prev) => prev.filter((r) => r.id !== requestId));
+    } catch {
+      setClaimError((prev) => ({
+        ...prev,
+        [requestId]: 'Network error. Please try again.',
+      }));
+    } finally {
+      setClaimingId(null);
     }
-
-    const data = await res.json();
-    setClaimError((prev) => ({
-      ...prev,
-      [requestId]: data.error ?? 'Failed to claim request',
-    }));
-    setRequests((prev) => prev.filter((r) => r.id !== requestId));
-    setClaimingId(null);
   }
 
   return (
