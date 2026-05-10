@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
 interface TimestampComment {
+  id: number;
   time: number;
   comment: string;
 }
@@ -32,6 +33,7 @@ function StarRating({
           <button
             key={star}
             type="button"
+            aria-label={`${star} star${star !== 1 ? 's' : ''}`}
             onClick={() => onChange(star)}
             className={`text-2xl leading-none ${
               star <= value ? 'text-yellow-400' : 'text-gray-300'
@@ -47,6 +49,7 @@ function StarRating({
 
 export function FeedbackForm({ requestId, durationSeconds, videoRef }: FeedbackFormProps) {
   const router = useRouter();
+  const commentIdRef = useRef(0);
   const [deliveryRating, setDeliveryRating] = useState(0);
   const [contentRating, setContentRating] = useState(0);
   const [overallRating, setOverallRating] = useState(0);
@@ -68,7 +71,10 @@ export function FeedbackForm({ requestId, durationSeconds, videoRef }: FeedbackF
   function addTimestampComment() {
     if (!newComment.trim()) return;
     const currentTime = Math.floor(videoRef.current?.currentTime ?? 0);
-    setTimestampComments((prev) => [...prev, { time: currentTime, comment: newComment.trim() }]);
+    setTimestampComments((prev) => [
+      ...prev,
+      { id: commentIdRef.current++, time: currentTime, comment: newComment.trim() },
+    ]);
     setNewComment('');
   }
 
@@ -89,31 +95,36 @@ export function FeedbackForm({ requestId, durationSeconds, videoRef }: FeedbackF
     setSubmitting(true);
     setError('');
 
-    const token = localStorage.getItem('token');
-    const res = await fetch(`/api/feedback-requests/${requestId}/submit`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({
-        deliveryRating,
-        contentRating,
-        overallRating,
-        writtenFeedback,
-        timestampComments,
-      }),
-    });
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/feedback-requests/${requestId}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          deliveryRating,
+          contentRating,
+          overallRating,
+          writtenFeedback,
+          timestampComments,
+        }),
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      router.push(`/feedback/give/${requestId}/confirmation?credits=${data.creditsEarned}`);
-      return;
+      if (res.ok) {
+        const data = await res.json();
+        router.push(`/feedback/give/${requestId}/confirmation?credits=${data.creditsEarned}`);
+        return;
+      }
+
+      const data = await res.json().catch(() => ({ error: 'Something went wrong' }));
+      setError(data.error ?? 'Failed to submit feedback');
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
-
-    const data = await res.json();
-    setError(data.error ?? 'Failed to submit feedback');
-    setSubmitting(false);
   }
 
   return (
@@ -176,13 +187,14 @@ export function FeedbackForm({ requestId, durationSeconds, videoRef }: FeedbackF
         {timestampComments.length > 0 && (
           <ul className="space-y-2">
             {timestampComments.map((tc, i) => (
-              <li key={i} className="flex items-start gap-2 bg-gray-50 rounded-md px-3 py-2 text-sm">
+              <li key={tc.id} className="flex items-start gap-2 bg-gray-50 rounded-md px-3 py-2 text-sm">
                 <span className="font-mono text-indigo-600 whitespace-nowrap">
                   {formatTime(tc.time)}
                 </span>
                 <span className="flex-1 text-gray-700">{tc.comment}</span>
                 <button
                   type="button"
+                  aria-label={`Remove comment at ${formatTime(tc.time)}`}
                   onClick={() => removeTimestampComment(i)}
                   className="text-gray-400 hover:text-red-500 transition"
                 >

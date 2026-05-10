@@ -35,24 +35,27 @@ export default function SubmissionPage({
 
   useEffect(() => {
     async function fetchRequest() {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/feedback-requests/${requestId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/feedback-requests/${requestId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
 
-      if (res.status === 401 || res.status === 403 || res.status === 404) {
-        router.push('/feedback/give');
-        return;
+        if (res.status === 401 || res.status === 403 || res.status === 404) {
+          router.push('/feedback/give');
+          return;
+        }
+
+        if (!res.ok) {
+          router.push('/feedback/give');
+          return;
+        }
+
+        const data = await res.json();
+        setFeedbackRequest(data.feedbackRequest);
+      } finally {
+        setLoading(false);
       }
-
-      if (!res.ok) {
-        router.push('/feedback/give');
-        return;
-      }
-
-      const data = await res.json();
-      setFeedbackRequest(data.feedbackRequest);
-      setLoading(false);
     }
 
     fetchRequest();
