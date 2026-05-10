@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import React from 'react';
 
 interface TimestampComment {
   time: number;
@@ -11,6 +12,7 @@ interface TimestampComment {
 interface FeedbackFormProps {
   requestId: string;
   durationSeconds: number;
+  videoRef: React.RefObject<HTMLVideoElement>;
 }
 
 function StarRating({
@@ -43,7 +45,7 @@ function StarRating({
   );
 }
 
-export function FeedbackForm({ requestId, durationSeconds }: FeedbackFormProps) {
+export function FeedbackForm({ requestId, durationSeconds, videoRef }: FeedbackFormProps) {
   const router = useRouter();
   const [deliveryRating, setDeliveryRating] = useState(0);
   const [contentRating, setContentRating] = useState(0);
@@ -65,8 +67,7 @@ export function FeedbackForm({ requestId, durationSeconds }: FeedbackFormProps) 
 
   function addTimestampComment() {
     if (!newComment.trim()) return;
-    const videoEl = document.querySelector('video') as HTMLVideoElement | null;
-    const currentTime = Math.floor(videoEl?.currentTime ?? 0);
+    const currentTime = Math.floor(videoRef.current?.currentTime ?? 0);
     setTimestampComments((prev) => [...prev, { time: currentTime, comment: newComment.trim() }]);
     setNewComment('');
   }
