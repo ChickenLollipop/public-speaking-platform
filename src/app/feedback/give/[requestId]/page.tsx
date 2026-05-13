@@ -24,13 +24,16 @@ interface FeedbackRequestDetail {
 export default function SubmissionPage({
   params,
 }: {
-  params: { requestId: string };
+  params: Promise<{ requestId: string }>;
 }) {
   const router = useRouter();
   const [feedbackRequest, setFeedbackRequest] = useState<FeedbackRequestDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [requestId, setRequestId] = useState<string>('');
 
-  const { requestId } = params;
+  useEffect(() => {
+    params.then(p => setRequestId(p.requestId));
+  }, [params]);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {

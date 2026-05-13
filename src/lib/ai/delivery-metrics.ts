@@ -20,7 +20,7 @@ const FILLER_PATTERNS = [
 export function calculateDeliveryMetrics(
   transcript: string,
   durationSeconds: number,
-  audioData?: Float32Array
+  _audioData?: Float32Array
 ): DeliveryMetrics {
   // Calculate pace (words per minute)
   const words = transcript.trim().split(/\s+/).filter(w => w.length > 0);

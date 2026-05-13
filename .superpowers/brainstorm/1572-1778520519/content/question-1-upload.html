@@ -1,0 +1,89 @@
+<h2>Upload & Storage Approach</h2>
+<p class="subtitle">How should we handle video upload during development vs production?</p>
+
+<div class="section">
+  <p>The codebase has S3 infrastructure in place, but we need to decide how the upload flow works. Choose your preferred approach:</p>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>S3 Only (Production-Ready)</h3>
+      <p><strong>How it works:</strong> Upload video directly to S3 using presigned URLs, then trigger AI analysis</p>
+      <div class="pros-cons" style="margin-top: 12px;">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Production-ready from day one</li>
+            <li>Scales properly</li>
+            <li>No dual code paths</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Requires AWS credentials to develop</li>
+            <li>Incurs S3 costs during testing</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Dual Mode (Development Flexibility)</h3>
+      <p><strong>How it works:</strong> Use localStorage/IndexedDB in dev (blob URLs), S3 in production (env flag toggle)</p>
+      <div class="pros-cons" style="margin-top: 12px;">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>No AWS credentials needed for local dev</li>
+            <li>Faster iteration</li>
+            <li>No cloud costs during development</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Two code paths to maintain</li>
+            <li>Local storage limits (typically ~50MB)</li>
+            <li>Can't test S3 integration locally</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>LocalStack for Development</h3>
+      <p><strong>How it works:</strong> Use LocalStack (local S3 emulator) in dev, real S3 in production</p>
+      <div class="pros-cons" style="margin-top: 12px;">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Tests real S3 behavior locally</li>
+            <li>Single code path</li>
+            <li>No cloud costs in dev</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Extra Docker service to manage</li>
+            <li>LocalStack setup complexity</li>
+            <li>Not always perfect S3 parity</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 30px; padding: 20px; background: #f3f4f6; border-radius: 8px;">
+  <p style="margin: 0;"><strong>Note:</strong> I noticed the dashboard currently uses localStorage for presentations (see <code>getPresentationsFromStorage()</code>). This suggests Option B might already be partially in place.</p>
+</div>

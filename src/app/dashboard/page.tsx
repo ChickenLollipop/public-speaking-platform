@@ -59,7 +59,7 @@ export default function DashboardPage() {
         {/* Action Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card
-            hover
+            hoverable
             onClick={() => router.push('/practice')}
             className="cursor-pointer"
           >

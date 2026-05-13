@@ -11,17 +11,43 @@ export interface ContentAnalysis {
 }
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
-if (!apiKey) {
-  throw new Error('ANTHROPIC_API_KEY environment variable is required');
-}
+export const isAnthropicConfigured = Boolean(apiKey);
 
-const anthropic = new Anthropic({ apiKey });
+let anthropic: Anthropic | null = null;
+
+function getAnthropicClient(): Anthropic {
+  if (!isAnthropicConfigured) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not configured');
+  }
+  if (!anthropic) {
+    anthropic = new Anthropic({ apiKey: apiKey! });
+  }
+  return anthropic;
+}
 
 export async function analyzeContent(
   transcript: string,
   durationSeconds: number,
   userGoals?: string[]
 ): Promise<ContentAnalysis> {
+  // Mock mode for development without API key
+  if (!isAnthropicConfigured) {
+    return {
+      has_intro: true,
+      has_conclusion: true,
+      structure_score: 75,
+      clarity_feedback: 'Mock analysis: API key not configured. Your presentation appears well-structured with clear communication.',
+      persuasiveness_score: 70,
+      weak_transitions: ['Mock: No transitions analyzed without API key'],
+      improvement_suggestions: [
+        'Configure ANTHROPIC_API_KEY for real analysis',
+        'Consider adding more specific examples',
+        'Work on varying your pace for emphasis'
+      ]
+    };
+  }
+
+  const client = getAnthropicClient();
   const minutes = Math.round(durationSeconds / 60);
 
   const prompt = `You are analyzing a presentation transcript. Provide structured feedback on:
@@ -65,7 +91,7 @@ Return response as JSON matching this schema:
 }`;
 
   try {
-    const response = await anthropic.messages.create({
+    const response = await client.messages.create({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 1024,
       messages: [

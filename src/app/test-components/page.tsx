@@ -28,7 +28,7 @@ export default function TestComponentsPage() {
             <Button variant="secondary">Secondary</Button>
             <Button variant="danger">Danger</Button>
             <Button variant="ghost">Ghost</Button>
-            <Button isLoading>Loading</Button>
+            <Button loading>Loading</Button>
             <Button disabled>Disabled</Button>
           </div>
         </Card>
@@ -41,31 +41,35 @@ export default function TestComponentsPage() {
               label="Text Input"
               placeholder="Enter text..."
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              helperText="This is helper text"
+              onChange={setInputValue}
             />
             <Input
               label="Required Input"
               placeholder="This field is required..."
+              value=""
+              onChange={() => {}}
               required
-              helperText="Notice the red asterisk in the label"
             />
             <Input
               label="Password Input"
               type="password"
               placeholder="Enter password..."
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={setPassword}
             />
             <Input
               label="Error State"
               error="This field has an error"
               placeholder="Error input..."
+              value=""
+              onChange={() => {}}
             />
             <Input
               label="Disabled Input"
               disabled
               placeholder="Disabled input..."
+              value=""
+              onChange={() => {}}
             />
           </div>
         </Card>
@@ -76,7 +80,7 @@ export default function TestComponentsPage() {
             <h3 className="font-semibold mb-2">Regular Card</h3>
             <p className="text-gray-600">This is a regular card component</p>
           </Card>
-          <Card hover>
+          <Card hoverable>
             <h3 className="font-semibold mb-2">Hoverable Card</h3>
             <p className="text-gray-600">This card has hover effects</p>
           </Card>
@@ -115,19 +119,19 @@ export default function TestComponentsPage() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-gray-600 mb-2">Small (25%)</p>
-              <ProgressBar value={25} size="sm" />
+              <ProgressBar value={25} height={4} />
             </div>
             <div>
-              <p className="text-sm text-gray-600 mb-2">Medium with label (50%)</p>
-              <ProgressBar value={50} size="md" showLabel />
+              <p className="text-sm text-gray-600 mb-2">Medium (50%)</p>
+              <ProgressBar value={50} height={8} />
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-2">Large (75%)</p>
-              <ProgressBar value={75} size="lg" color="green" />
+              <ProgressBar value={75} height={12} color="bg-green-600" />
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-2">Indeterminate</p>
-              <ProgressBar indeterminate />
+              <ProgressBar value={0} variant="indeterminate" />
             </div>
           </div>
         </Card>
@@ -146,7 +150,7 @@ export default function TestComponentsPage() {
         >
           <div className="space-y-4">
             <p>This is a modal dialog. Press ESC or click outside to close.</p>
-            <Input label="Modal Input" placeholder="Type something..." />
+            <Input label="Modal Input" placeholder="Type something..." value="" onChange={() => {}} />
             <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
                 Cancel

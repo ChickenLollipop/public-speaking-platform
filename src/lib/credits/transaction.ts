@@ -59,3 +59,35 @@ export async function getUserCredits(userId: string): Promise<number> {
 
   return user.creditBalance;
 }
+
+/**
+ * Deduct credits from a user's balance
+ */
+export async function deductCredits(
+  userId: string,
+  amount: number,
+  type: CreditTransactionType,
+  relatedId?: string
+) {
+  if (amount <= 0) {
+    throw new Error('Amount must be positive');
+  }
+
+  return createCreditTransaction(userId, -amount, type, relatedId);
+}
+
+/**
+ * Add credits to a user's balance
+ */
+export async function addCredits(
+  userId: string,
+  amount: number,
+  type: CreditTransactionType,
+  relatedId?: string
+) {
+  if (amount <= 0) {
+    throw new Error('Amount must be positive');
+  }
+
+  return createCreditTransaction(userId, amount, type, relatedId);
+}

@@ -1,0 +1,47 @@
+<h2>Practice Flow - Existing Design Review</h2>
+<p class="subtitle">I found an existing design document for the practice flow. Let's review what's already planned and refine it.</p>
+
+<div class="section">
+  <h3>Current Design (from docs/design.md)</h3>
+  <p>The existing plan includes a 4-state flow:</p>
+
+  <div class="mockup" style="margin: 20px 0;">
+    <div class="mockup-header">State Machine</div>
+    <div class="mockup-body" style="padding: 30px; text-align: center;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap;">
+        <div style="padding: 20px; background: #f3f4f6; border-radius: 8px; min-width: 120px;">
+          <strong>SETUP</strong>
+          <div style="font-size: 12px; color: #666; margin-top: 8px;">Fill form<br/>Camera preview</div>
+        </div>
+        <div style="font-size: 24px; color: #3b82f6;">→</div>
+        <div style="padding: 20px; background: #fee2e2; border-radius: 8px; min-width: 120px;">
+          <strong>RECORDING</strong>
+          <div style="font-size: 12px; color: #666; margin-top: 8px;">Live camera<br/>Timer</div>
+        </div>
+        <div style="font-size: 24px; color: #3b82f6;">→</div>
+        <div style="padding: 20px; background: #f3f4f6; border-radius: 8px; min-width: 120px;">
+          <strong>PREVIEW</strong>
+          <div style="font-size: 12px; color: #666; margin-top: 8px;">Review video<br/>Re-record option</div>
+        </div>
+        <div style="font-size: 24px; color: #3b82f6;">→</div>
+        <div style="padding: 20px; background: #dbeafe; border-radius: 8px; min-width: 120px;">
+          <strong>UPLOADING</strong>
+          <div style="font-size: 12px; color: #666; margin-top: 8px;">Progress bar<br/>AI processing</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin: 30px 0; padding: 20px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+    <strong>📋 Current Status:</strong>
+    <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+      <li>VideoRecorder component exists and is complete</li>
+      <li>S3 upload infrastructure is in place</li>
+      <li>API endpoints for presentations exist</li>
+      <li>AI analysis modules are implemented</li>
+      <li><strong>Missing:</strong> The practice page itself (/app/practice/page.tsx)</li>
+    </ul>
+  </div>
+</div>
+
+<p style="margin-top: 30px; font-size: 16px;"><strong>Question:</strong> Should we proceed with implementing this existing design, or would you like to make any changes to the flow first?</p>

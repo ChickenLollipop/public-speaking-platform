@@ -24,12 +24,6 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({ score }) => {
     return 'Needs Improvement';
   };
 
-  const getStatusVariant = (score: number): 'success' | 'warning' | 'danger' => {
-    if (score >= 70) return 'success';
-    if (score >= 50) return 'warning';
-    return 'danger';
-  };
-
   // Calculate circumference for circular progress
   const radius = 80;
   const circumference = 2 * Math.PI * radius;

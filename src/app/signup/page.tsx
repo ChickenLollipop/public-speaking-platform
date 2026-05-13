@@ -91,7 +91,7 @@ export default function SignupPage() {
           label="Name"
           type="text"
           value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          onChange={(value) => setFormData({ ...formData, name: value })}
           placeholder="Your full name"
           error={errors.name}
           required
@@ -101,7 +101,7 @@ export default function SignupPage() {
           label="Email"
           type="email"
           value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          onChange={(value) => setFormData({ ...formData, email: value })}
           placeholder="you@example.com"
           error={errors.email}
           required
@@ -112,7 +112,7 @@ export default function SignupPage() {
             label="Password"
             type="password"
             value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            onChange={(value) => setFormData({ ...formData, password: value })}
             placeholder="Min 8 characters"
             error={errors.password}
             required
@@ -174,7 +174,7 @@ export default function SignupPage() {
           </p>
         )}
 
-        <Button type="submit" className="w-full" isLoading={isLoading}>
+        <Button type="submit" className="w-full" loading={isLoading}>
           Create Account
         </Button>
 

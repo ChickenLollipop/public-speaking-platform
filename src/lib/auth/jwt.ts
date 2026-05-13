@@ -9,6 +9,7 @@ const JWT_SECRET = new TextEncoder().encode(jwtSecret);
 export interface TokenPayload {
   userId: string;
   email: string;
+  [key: string]: unknown; // Index signature for JWTPayload compatibility
 }
 
 export async function signToken(

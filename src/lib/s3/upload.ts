@@ -1,7 +1,7 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomBytes } from 'crypto';
-import { getS3Client, S3_BUCKET_NAME, S3_BUCKET_REGION } from './client';
+import { getS3Client, S3_BUCKET_NAME, S3_BUCKET_REGION, isS3Configured } from './client';
 
 export function generateVideoKey(userId: string): string {
   if (!userId || userId.includes('/') || userId.includes('\\')) {
@@ -15,8 +15,19 @@ export function generateVideoKey(userId: string): string {
 export async function generateUploadUrl(userId: string): Promise<{
   url: string;
   key: string;
+  mockMode?: boolean;
 }> {
   const key = generateVideoKey(userId);
+
+  // Mock mode for local development without S3
+  if (!isS3Configured) {
+    return {
+      url: `/api/mock-upload/${key}`,
+      key,
+      mockMode: true,
+    };
+  }
+
   const client = getS3Client();
 
   const command = new PutObjectCommand({
@@ -38,6 +49,11 @@ export function getVideoUrl(key: string): string {
   // Validate key format matches expected pattern
   if (!key.startsWith('videos/') || !key.endsWith('.mp4')) {
     throw new Error('Invalid S3 key format');
+  }
+
+  // Mock mode for local development
+  if (!isS3Configured) {
+    return `/api/mock-video/${key}`;
   }
 
   return `https://${S3_BUCKET_NAME}.s3.${S3_BUCKET_REGION}.amazonaws.com/${key}`;

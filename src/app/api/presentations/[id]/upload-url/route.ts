@@ -5,7 +5,7 @@ import { generateUploadUrl } from '@/lib/s3/upload';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await authenticate(request);
@@ -14,8 +14,10 @@ export async function GET(
       return NextResponse.json({ error: auth.error }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const presentation = await db.presentation.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!presentation) {
@@ -36,7 +38,7 @@ export async function GET(
 
     // Update presentation with video key
     await db.presentation.update({
-      where: { id: params.id },
+      where: { id },
       data: { videoUrl: key },
     });
 

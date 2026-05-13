@@ -44,7 +44,7 @@ export default function LoginPage() {
           label="Email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={setEmail}
           placeholder="you@example.com"
           required
         />
@@ -53,7 +53,7 @@ export default function LoginPage() {
           label="Password"
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={setPassword}
           placeholder="Your password"
           required
         />
@@ -72,7 +72,7 @@ export default function LoginPage() {
           <p className="text-sm text-red-500" role="alert" aria-live="assertive">{error}</p>
         )}
 
-        <Button type="submit" className="w-full" isLoading={isLoading}>
+        <Button type="submit" className="w-full" loading={isLoading}>
           Sign In
         </Button>
 

@@ -55,7 +55,7 @@ export function PresentationCard({ presentation }: PresentationCardProps) {
 
   return (
     <Link href={`/presentation/${presentation.id}`}>
-      <Card hover className="h-full">
+      <Card hoverable className="h-full">
         <div className="flex flex-col h-full">
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-lg font-semibold text-gray-900 flex-1">
