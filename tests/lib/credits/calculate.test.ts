@@ -2,6 +2,7 @@ import {
   calculateAIAnalysisCost,
   calculateFeedbackRequestCost,
   calculateFeedbackEarnings,
+  calculateTranscriptionCost,
 } from '@/lib/credits/calculate';
 
 describe('Credit calculations', () => {
@@ -79,6 +80,31 @@ describe('Credit calculations', () => {
       expect(earnings.base).toBe(5);
       expect(earnings.multiplier).toBe(0.5);
       expect(earnings.final).toBe(2.5);
+    });
+  });
+
+  describe('calculateTranscriptionCost', () => {
+    it('charges 1 credit for videos under 1 minute', () => {
+      expect(calculateTranscriptionCost(30)).toBe(1);
+      expect(calculateTranscriptionCost(59)).toBe(1);
+    });
+
+    it('charges 1 credit per minute rounded up', () => {
+      expect(calculateTranscriptionCost(60)).toBe(1);
+      expect(calculateTranscriptionCost(61)).toBe(2);
+      expect(calculateTranscriptionCost(90)).toBe(2);
+      expect(calculateTranscriptionCost(150)).toBe(3);
+      expect(calculateTranscriptionCost(300)).toBe(5);
+    });
+
+    it('handles long videos correctly', () => {
+      expect(calculateTranscriptionCost(3600)).toBe(60); // 1 hour
+      expect(calculateTranscriptionCost(3661)).toBe(62); // 61 minutes
+    });
+
+    it('throws error for invalid duration', () => {
+      expect(() => calculateTranscriptionCost(0)).toThrow('Duration must be positive');
+      expect(() => calculateTranscriptionCost(-10)).toThrow('Duration must be positive');
     });
   });
 });

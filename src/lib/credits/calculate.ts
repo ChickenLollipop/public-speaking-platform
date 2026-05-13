@@ -66,3 +66,21 @@ export function calculateFeedbackEarnings(
     final: base * multiplier,
   };
 }
+
+/**
+ * Calculate transcription cost based on video duration
+ *
+ * Formula: 1 credit per minute (rounded up)
+ * Minimum: 1 credit
+ *
+ * @param durationSeconds - Video duration in seconds
+ * @returns Number of credits required
+ */
+export function calculateTranscriptionCost(durationSeconds: number): number {
+  if (durationSeconds <= 0) {
+    throw new Error('Duration must be positive');
+  }
+
+  const minutes = durationSeconds / 60;
+  return Math.max(1, Math.ceil(minutes));
+}
