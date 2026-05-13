@@ -35,17 +35,19 @@ enum SkillLevel {
 }
 
 model Presentation {
-  id          String            @id @default(uuid())
-  userId      String            @map("user_id")
-  title       String
-  description String?
-  type        PresentationType
-  videoUrl    String?           @map("video_url")
-  scriptText  String?           @map("script_text")
-  duration    Int?              // seconds
-  visibility  Visibility        @default(PRIVATE)
-  status      ProcessingStatus  @default(PROCESSING)
-  createdAt   DateTime          @default(now()) @map("created_at")
+  id            String            @id @default(uuid())
+  userId        String            @map("user_id")
+  title         String
+  description   String?
+  type          PresentationType
+  videoUrl      String?           @map("video_url")
+  scriptText    String?           @map("script_text")
+  duration      Int?              // seconds
+  transcript    String?           @db.Text
+  transcribedAt DateTime?         @map("transcribed_at")
+  visibility    Visibility        @default(PRIVATE)
+  status        ProcessingStatus  @default(PROCESSING)
+  createdAt     DateTime          @default(now()) @map("created_at")
 
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   aiAnalysis      AIAnalysis?
@@ -166,6 +168,7 @@ enum CreditTransactionType {
   FEEDBACK_GIVEN
   FEEDBACK_RECEIVED
   AI_ANALYSIS
+  TRANSCRIPTION
   PARTNER_SESSION
   REFUND
 }

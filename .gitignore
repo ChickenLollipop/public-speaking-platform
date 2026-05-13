@@ -33,4 +33,4 @@ yarn-error.log*
 Thumbs.db
 
 # Prisma
-prisma/migrations/
+# Note: migrations should be tracked in version control
