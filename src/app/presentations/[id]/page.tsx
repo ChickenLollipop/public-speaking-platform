@@ -20,6 +20,9 @@ interface Presentation {
   status: 'PROCESSING' | 'READY' | 'FAILED';
   createdAt: string;
   visibility: string;
+  duration?: number;
+  transcript?: string;
+  transcribedAt?: string;
   aiAnalysis?: {
     transcript: string;
     deliveryMetrics: any;
@@ -35,7 +38,9 @@ export default function PresentationDetailPage() {
   const [presentation, setPresentation] = useState<Presentation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState<
+    'idle' | 'transcribing' | 'analyzing' | 'complete' | 'error'
+  >('idle');
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const presentationId = params.id as string;
@@ -78,7 +83,7 @@ export default function PresentationDetailPage() {
   }, [presentationId]);
 
   const handleAnalyze = async () => {
-    setIsAnalyzing(true);
+    setAnalysisStep('transcribing'); // Assume transcription first
     setAnalysisError(null);
 
     try {
@@ -100,11 +105,11 @@ export default function PresentationDetailPage() {
         throw new Error(data.error || 'Analysis failed');
       }
 
+      setAnalysisStep('complete');
+
       // Refresh presentation data
       const refreshResponse = await fetch(`/api/presentations/${presentationId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (refreshResponse.ok) {
@@ -114,8 +119,7 @@ export default function PresentationDetailPage() {
     } catch (err) {
       console.error('Analysis error:', err);
       setAnalysisError(err instanceof Error ? err.message : 'Analysis failed');
-    } finally {
-      setIsAnalyzing(false);
+      setAnalysisStep('error');
     }
   };
 
@@ -130,6 +134,27 @@ export default function PresentationDetailPage() {
       default:
         return <Badge variant="neutral">{status}</Badge>;
     }
+  };
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatDuration = (seconds: number | undefined) => {
+    if (!seconds) return 'N/A';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const countWords = (text: string) => {
+    return text.trim().split(/\s+/).filter(w => w.length > 0).length;
   };
 
   if (isLoading) {
@@ -187,10 +212,14 @@ export default function PresentationDetailPage() {
             {!presentation.aiAnalysis && presentation.status !== 'PROCESSING' && presentation.status !== 'FAILED' && (
               <Button
                 onClick={handleAnalyze}
-                loading={isAnalyzing}
-                disabled={isAnalyzing}
+                loading={analysisStep === 'transcribing' || analysisStep === 'analyzing'}
+                disabled={analysisStep !== 'idle' && analysisStep !== 'error'}
               >
-                {isAnalyzing ? 'Analyzing...' : 'Analyze with AI'}
+                {analysisStep === 'transcribing'
+                  ? 'Transcribing...'
+                  : analysisStep === 'analyzing'
+                  ? 'Analyzing...'
+                  : 'Analyze with AI'}
               </Button>
             )}
             <Button variant="secondary" onClick={() => router.push('/dashboard')}>
@@ -212,6 +241,36 @@ export default function PresentationDetailPage() {
               >
                 Dismiss
               </Button>
+            </div>
+          </Card>
+        )}
+
+        {/* Transcription Progress */}
+        {analysisStep === 'transcribing' && (
+          <Card>
+            <div className="flex items-center space-x-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Transcribing video...</h3>
+                <p className="text-sm text-gray-600">
+                  This may take a minute. Processing audio from your video.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Analysis Progress */}
+        {analysisStep === 'analyzing' && (
+          <Card>
+            <div className="flex items-center space-x-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Analyzing content...</h3>
+                <p className="text-sm text-gray-600">
+                  AI is evaluating your presentation.
+                </p>
+              </div>
             </div>
           </Card>
         )}
@@ -250,6 +309,31 @@ export default function PresentationDetailPage() {
                   <div className="w-3 h-3 bg-blue-600 rounded-full animation-delay-400"></div>
                 </div>
               </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Transcript Viewer */}
+        {presentation.transcript && (
+          <Card>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Transcript
+            </h2>
+            <div className="text-sm text-gray-600 mb-3 flex items-center gap-4">
+              <span>{countWords(presentation.transcript)} words</span>
+              <span>•</span>
+              <span>{formatDuration(presentation.duration)}</span>
+              {presentation.transcribedAt && (
+                <>
+                  <span>•</span>
+                  <span>Transcribed {formatDate(presentation.transcribedAt)}</span>
+                </>
+              )}
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+              <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                {presentation.transcript}
+              </p>
             </div>
           </Card>
         )}
