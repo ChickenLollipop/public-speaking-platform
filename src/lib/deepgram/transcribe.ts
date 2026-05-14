@@ -70,6 +70,10 @@ async function transcribeVideoOnce(videoKey: string): Promise<TranscriptionResul
   );
 
   // Parse response
+  if (!result) {
+    throw new Error('Deepgram returned null result');
+  }
+
   const channel = result.results.channels[0];
   const alternative = channel.alternatives[0];
 
@@ -101,7 +105,7 @@ export async function transcribeVideo(
       // Last attempt?
       if (attempt === maxRetries) {
         throw new TranscriptionError(
-          `Transcription failed after ${maxRetries} attempts: ${lastError.message}`,
+          `Transcription failed after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`,
           'MAX_RETRIES_EXCEEDED',
           false
         );

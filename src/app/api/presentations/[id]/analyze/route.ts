@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { authenticate } from '@/lib/auth/middleware';
-import { analyzePresentation, generateMockTranscript } from '@/lib/ai/analyze-presentation';
+import { analyzePresentation } from '@/lib/ai/analyze-presentation';
 import { deductCredits } from '@/lib/credits/transaction';
+import { transcribeVideo } from '@/lib/deepgram/transcribe';
+import { calculateTranscriptionCost } from '@/lib/credits/calculate';
 
 export async function POST(
   request: NextRequest,
@@ -46,12 +48,8 @@ export async function POST(
       );
     }
 
-    // Get optional transcript from request body
-    const body = await request.json().catch(() => ({}));
-    const providedTranscript = body.transcript as string | undefined;
-
     // For TEXT_SCRIPT presentations, use the script
-    // For VIDEO presentations, use provided transcript or generate mock
+    // For VIDEO presentations, transcribe with Deepgram
     let transcript: string;
 
     if (presentation.type === 'TEXT_SCRIPT') {
@@ -63,9 +61,80 @@ export async function POST(
         );
       }
     } else {
-      // For video presentations, we'd normally get transcript from Deepgram
-      // For now, use provided transcript or generate mock
-      transcript = providedTranscript || generateMockTranscript();
+      // VIDEO_UPLOAD or VIDEO_RECORDING types
+
+      // Check if video was uploaded
+      if (!presentation.videoUrl) {
+        return NextResponse.json(
+          { error: 'Video not uploaded' },
+          { status: 400 }
+        );
+      }
+
+      // Check if already transcribed
+      if (presentation.transcript) {
+        // Use existing transcript (no cost)
+        transcript = presentation.transcript;
+      } else {
+        // Need to transcribe
+
+        // Estimate cost (use duration if available, else estimate)
+        const estimatedDuration = presentation.duration || 300; // 5 min default
+        const transcriptionCost = calculateTranscriptionCost(estimatedDuration);
+
+        // Check credits BEFORE transcribing
+        if (presentation.user.creditBalance < transcriptionCost) {
+          return NextResponse.json(
+            {
+              error: 'Insufficient credits for transcription',
+              required: transcriptionCost,
+              balance: presentation.user.creditBalance,
+            },
+            { status: 402 }
+          );
+        }
+
+        try {
+          // Transcribe video
+          const transcriptionResult = await transcribeVideo(presentation.videoUrl);
+          transcript = transcriptionResult.transcript;
+
+          // Deduct transcription credits
+          await deductCredits(
+            presentation.userId,
+            transcriptionCost,
+            'TRANSCRIPTION',
+            presentation.id
+          );
+
+          // Store transcript in database
+          await db.presentation.update({
+            where: { id: presentation.id },
+            data: {
+              transcript: transcriptionResult.transcript,
+              transcribedAt: new Date(),
+              duration: transcriptionResult.durationSeconds,
+            },
+          });
+
+        } catch (error) {
+          console.error('Transcription error:', error);
+
+          // Update presentation status to FAILED
+          await db.presentation.update({
+            where: { id: presentation.id },
+            data: { status: 'FAILED' },
+          }).catch(() => {}); // Ignore update errors
+
+          return NextResponse.json(
+            {
+              error: `Transcription failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              step: 'transcription',
+            },
+            { status: 500 }
+          );
+        }
+      }
     }
 
     // Duration: use presentation duration or estimate from transcript
