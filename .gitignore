@@ -34,3 +34,7 @@ Thumbs.db
 
 # Prisma
 # Note: migrations should be tracked in version control
+
+# Local uploads (mock storage)
+uploads/
+server.log
