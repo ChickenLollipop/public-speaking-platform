@@ -214,15 +214,15 @@ export default function PracticePage() {
                   type="button"
                   onClick={() => setType('VIDEO_UPLOAD')}
                   disabled={isSubmitting}
-                  className={`p-4 border-2 rounded-lg transition-colors ${
+                  className={`p-6 border-2 rounded-lg transition-colors text-center ${
                     type === 'VIDEO_UPLOAD'
                       ? 'border-blue-600 bg-blue-50'
                       : 'border-gray-300 hover:border-gray-400'
                   } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <div className="text-2xl mb-2">🎥</div>
-                  <div className="font-semibold">Video Upload</div>
-                  <div className="text-sm text-gray-600 mt-1">
+                  <div className="text-3xl mb-3">🎥</div>
+                  <div className="font-semibold text-lg mb-2">Video Upload</div>
+                  <div className="text-sm text-gray-600">
                     Upload a recorded video
                   </div>
                 </button>
@@ -231,15 +231,15 @@ export default function PracticePage() {
                   type="button"
                   onClick={() => setType('TEXT_SCRIPT')}
                   disabled={isSubmitting}
-                  className={`p-4 border-2 rounded-lg transition-colors ${
+                  className={`p-6 border-2 rounded-lg transition-colors text-center ${
                     type === 'TEXT_SCRIPT'
                       ? 'border-blue-600 bg-blue-50'
                       : 'border-gray-300 hover:border-gray-400'
                   } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <div className="text-2xl mb-2">📝</div>
-                  <div className="font-semibold">Text Script</div>
-                  <div className="text-sm text-gray-600 mt-1">
+                  <div className="text-3xl mb-3">📝</div>
+                  <div className="font-semibold text-lg mb-2">Text Script</div>
+                  <div className="text-sm text-gray-600">
                     Paste your script
                   </div>
                 </button>
