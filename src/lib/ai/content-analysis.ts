@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 export interface ContentAnalysis {
   has_intro: boolean;
@@ -10,19 +10,22 @@ export interface ContentAnalysis {
   improvement_suggestions: string[];
 }
 
-const apiKey = process.env.ANTHROPIC_API_KEY;
-export const isAnthropicConfigured = Boolean(apiKey);
+const apiKey = process.env.KIMI_API_KEY;
+export const isKimiConfigured = Boolean(apiKey);
 
-let anthropic: Anthropic | null = null;
+let kimiClient: OpenAI | null = null;
 
-function getAnthropicClient(): Anthropic {
-  if (!isAnthropicConfigured) {
-    throw new Error('ANTHROPIC_API_KEY environment variable is not configured');
+function getKimiClient(): OpenAI {
+  if (!isKimiConfigured) {
+    throw new Error('KIMI_API_KEY environment variable is not configured');
   }
-  if (!anthropic) {
-    anthropic = new Anthropic({ apiKey: apiKey! });
+  if (!kimiClient) {
+    kimiClient = new OpenAI({
+      apiKey: apiKey!,
+      baseURL: 'https://api.moonshot.ai/v1'
+    });
   }
-  return anthropic;
+  return kimiClient;
 }
 
 export async function analyzeContent(
@@ -31,7 +34,7 @@ export async function analyzeContent(
   userGoals?: string[]
 ): Promise<ContentAnalysis> {
   // Mock mode for development without API key
-  if (!isAnthropicConfigured) {
+  if (!isKimiConfigured) {
     return {
       has_intro: true,
       has_conclusion: true,
@@ -40,14 +43,14 @@ export async function analyzeContent(
       persuasiveness_score: 70,
       weak_transitions: ['Mock: No transitions analyzed without API key'],
       improvement_suggestions: [
-        'Configure ANTHROPIC_API_KEY for real analysis',
+        'Configure KIMI_API_KEY for real analysis',
         'Consider adding more specific examples',
         'Work on varying your pace for emphasis'
       ]
     };
   }
 
-  const client = getAnthropicClient();
+  const client = getKimiClient();
   const minutes = Math.round(durationSeconds / 60);
 
   const prompt = `You are analyzing a presentation transcript. Provide structured feedback on:
@@ -91,8 +94,8 @@ Return response as JSON matching this schema:
 }`;
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+    const response = await client.chat.completions.create({
+      model: 'kimi-k2.6',
       max_tokens: 1024,
       messages: [
         {
@@ -102,14 +105,14 @@ Return response as JSON matching this schema:
       ],
     });
 
-    const textContent = response.content.find(c => c.type === 'text');
-    if (!textContent || textContent.type !== 'text') {
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
       throw new Error('Invalid response from API');
     }
 
     try {
       // Strip markdown code blocks if present
-      let jsonText = textContent.text.trim();
+      let jsonText = content.trim();
       if (jsonText.startsWith('```')) {
         jsonText = jsonText.replace(/^```(?:json)?\n?/g, '').replace(/\n?```$/g, '');
       }
