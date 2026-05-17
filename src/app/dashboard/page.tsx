@@ -71,15 +71,16 @@ export default function DashboardPage() {
             </p>
           </Card>
 
-          <Card className="opacity-50 cursor-not-allowed">
+          <Card
+            hoverable
+            onClick={() => router.push('/feedback/give')}
+            className="cursor-pointer"
+          >
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Give Feedback
             </h3>
             <p className="text-gray-600 text-sm">
               Help others and earn credits
-            </p>
-            <p className="text-xs text-gray-500 mt-2 italic">
-              Coming soon
             </p>
           </Card>
 

@@ -412,15 +412,20 @@ export default function PresentationDetailPage() {
               Next Steps
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 border border-gray-200 rounded-lg opacity-50">
+              <div className="p-4 border border-gray-200 rounded-lg">
                 <h3 className="font-semibold text-gray-900 mb-2">
                   Request Feedback
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
                   Get detailed feedback from the community
                 </p>
-                <Button disabled className="w-full" size="sm">
-                  Coming Soon
+                <Button
+                  variant="secondary"
+                  onClick={() => router.push('/feedback/give')}
+                  className="w-full"
+                  size="sm"
+                >
+                  Browse Requests
                 </Button>
               </div>
               <div className="p-4 border border-gray-200 rounded-lg">
