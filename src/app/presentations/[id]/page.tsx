@@ -398,9 +398,11 @@ export default function PresentationDetailPage() {
               <p className="text-gray-600 mb-4">
                 We encountered an error while processing your presentation.
               </p>
-              <Button onClick={() => router.push('/practice')}>
-                Try Again
-              </Button>
+              <div className="flex justify-center">
+                <Button onClick={() => router.push('/practice')}>
+                  Try Again
+                </Button>
+              </div>
             </div>
           </Card>
         )}
