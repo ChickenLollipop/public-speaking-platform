@@ -61,9 +61,9 @@ export default function DashboardPage() {
           <Card
             hoverable
             onClick={() => router.push('/practice')}
-            className="cursor-pointer"
+            className="cursor-pointer text-center py-8"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
               New Practice
             </h3>
             <p className="text-gray-600 text-sm">
@@ -74,9 +74,9 @@ export default function DashboardPage() {
           <Card
             hoverable
             onClick={() => router.push('/feedback/give')}
-            className="cursor-pointer"
+            className="cursor-pointer text-center py-8"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
               Give Feedback
             </h3>
             <p className="text-gray-600 text-sm">
@@ -84,14 +84,14 @@ export default function DashboardPage() {
             </p>
           </Card>
 
-          <Card className="opacity-50 cursor-not-allowed">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <Card className="opacity-50 cursor-not-allowed text-center py-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
               Credit History
             </h3>
             <p className="text-gray-600 text-sm">
               View your transaction history
             </p>
-            <p className="text-xs text-gray-500 mt-2 italic">
+            <p className="text-xs text-gray-500 mt-3 italic">
               Coming soon
             </p>
           </Card>
@@ -108,9 +108,11 @@ export default function DashboardPage() {
               <p className="text-gray-600 mb-4">
                 No presentations yet. Start practicing!
               </p>
-              <Button onClick={() => router.push('/practice')}>
-                Create Your First Presentation
-              </Button>
+              <div className="flex justify-center">
+                <Button onClick={() => router.push('/practice')}>
+                  Create Your First Presentation
+                </Button>
+              </div>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
