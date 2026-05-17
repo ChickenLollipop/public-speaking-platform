@@ -177,8 +177,8 @@ export default function PracticePage() {
           </p>
         </div>
 
-        <Card>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <Card className="p-8">
+          <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl mx-auto">
             {/* Title */}
             <Input
               label="Title"
