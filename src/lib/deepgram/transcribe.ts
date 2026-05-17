@@ -1,7 +1,9 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
-import { getDeepgramClient } from './client';
-import { getS3Client, S3_BUCKET_NAME } from '@/lib/s3/client';
+import { createReadStream } from 'fs';
+import { join } from 'path';
+import { getDeepgramClient, isDeepgramConfigured } from './client';
+import { getS3Client, S3_BUCKET_NAME, isS3Configured } from '@/lib/s3/client';
 
 export interface TranscriptionResult {
   transcript: string;
@@ -42,15 +44,24 @@ function isNonRetryableError(error: any): boolean {
 }
 
 async function transcribeVideoOnce(videoKey: string): Promise<TranscriptionResult> {
-  // Fetch video from S3
-  const s3Client = getS3Client();
-  const command = new GetObjectCommand({
-    Bucket: S3_BUCKET_NAME,
-    Key: videoKey,
-  });
+  let videoStream: Readable;
 
-  const response = await s3Client.send(command);
-  const videoStream = response.Body as Readable;
+  if (isS3Configured) {
+    // Fetch video from S3
+    const s3Client = getS3Client();
+    const command = new GetObjectCommand({
+      Bucket: S3_BUCKET_NAME,
+      Key: videoKey,
+    });
+
+    const response = await s3Client.send(command);
+    videoStream = response.Body as Readable;
+  } else {
+    // Use local file (mock mode)
+    const fileName = videoKey.replace(/\//g, '_');
+    const filePath = join(process.cwd(), 'uploads', fileName);
+    videoStream = createReadStream(filePath);
+  }
 
   // Configure Deepgram options
   const options = {
@@ -89,6 +100,27 @@ export async function transcribeVideo(
   videoKey: string,
   maxRetries: number = 3
 ): Promise<TranscriptionResult> {
+  // TEMPORARY: Always use mock mode for testing KIMI AI integration
+  // Remove this block to re-enable real Deepgram transcription
+  console.log('[Mock Transcription] Using mock transcript for KIMI AI testing');
+  return {
+    transcript: 'This is a mock transcript for testing KIMI AI. Hello everyone, thank you for being here today. I want to talk about the importance of effective communication in public speaking. First, let me share three key points. Number one, clear structure is essential. Every presentation should have a beginning, middle, and end. This helps your audience follow along and understand your message. Number two, engaging your audience matters tremendously. Make eye contact, use appropriate gestures, and vary your tone to keep people interested. Number three, practice makes perfect. The more you present, the more confident you become. However, I noticed some weak transitions between my main points. In conclusion, by following these principles you will become a much better speaker. Thank you all for your attention and I look forward to your questions.',
+    durationSeconds: 120,
+    confidence: 0.95,
+    words: []
+  };
+
+  // Mock mode for development without Deepgram API key
+  if (!isDeepgramConfigured) {
+    console.log('[Mock Transcription] Using mock transcript for development');
+    return {
+      transcript: 'This is a mock transcript for development. Configure DEEPGRAM_API_KEY for real transcription. Hello everyone, thank you for being here today. I want to talk about the importance of effective communication in public speaking. First, let me share three key points. Number one, clear structure is essential. Every presentation should have a beginning, middle, and end. Number two, engaging your audience matters. Make eye contact, use gestures, and vary your tone. Number three, practice makes perfect. The more you present, the more confident you become. In conclusion, these principles will help you become a better speaker. Thank you for your attention.',
+      durationSeconds: 120,
+      confidence: 0.95,
+      words: []
+    };
+  }
+
   let lastError: Error | undefined;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
