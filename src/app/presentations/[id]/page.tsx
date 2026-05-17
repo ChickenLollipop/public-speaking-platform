@@ -230,7 +230,7 @@ export default function PresentationDetailPage() {
 
         {/* Analysis Error */}
         {analysisError && (
-          <Card>
+          <Card className="p-6">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-800">{analysisError}</p>
               <Button
@@ -247,7 +247,7 @@ export default function PresentationDetailPage() {
 
         {/* Transcription Progress */}
         {analysisStep === 'transcribing' && (
-          <Card>
+          <Card className="p-6">
             <div className="flex items-center space-x-3">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <div>
@@ -262,7 +262,7 @@ export default function PresentationDetailPage() {
 
         {/* Analysis Progress */}
         {analysisStep === 'analyzing' && (
-          <Card>
+          <Card className="p-6">
             <div className="flex items-center space-x-3">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <div>
@@ -277,7 +277,7 @@ export default function PresentationDetailPage() {
 
         {/* Video Player */}
         {videoUrl && presentation.type !== 'TEXT_SCRIPT' && (
-          <Card>
+          <Card className="p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Video</h2>
             <div className="bg-black rounded-lg overflow-hidden">
               <video
@@ -293,7 +293,7 @@ export default function PresentationDetailPage() {
 
         {/* Processing Status */}
         {presentation.status === 'PROCESSING' && (
-          <Card>
+          <Card className="p-6">
             <div className="text-center py-8">
               <div className="text-4xl mb-4">⏳</div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -315,7 +315,7 @@ export default function PresentationDetailPage() {
 
         {/* Transcript Viewer */}
         {presentation.transcript && (
-          <Card>
+          <Card className="p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Transcript
             </h2>
@@ -342,7 +342,7 @@ export default function PresentationDetailPage() {
         {presentation.aiAnalysis && (
           <>
             {/* Overall Score */}
-            <Card>
+            <Card className="p-6">
               <div className="text-center py-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">
                   Overall Score
@@ -373,7 +373,7 @@ export default function PresentationDetailPage() {
 
             {/* Transcript */}
             {presentation.aiAnalysis.transcript && (
-              <Card>
+              <Card className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   Transcript
                 </h2>
@@ -389,7 +389,7 @@ export default function PresentationDetailPage() {
 
         {/* Failed Status */}
         {presentation.status === 'FAILED' && (
-          <Card>
+          <Card className="p-6">
             <div className="text-center py-8">
               <div className="text-4xl mb-4">❌</div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -407,7 +407,7 @@ export default function PresentationDetailPage() {
 
         {/* Actions */}
         {presentation.status === 'READY' && (
-          <Card>
+          <Card className="p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Next Steps
             </h2>
