@@ -55,6 +55,9 @@ export async function GET(request: NextRequest) {
     const presentations = await db.presentation.findMany({
       where: { userId: auth.user.userId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        aiAnalysis: true,
+      },
     });
 
     return NextResponse.json({ presentations });

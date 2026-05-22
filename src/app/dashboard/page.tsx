@@ -84,24 +84,36 @@ export default function DashboardPage() {
             </p>
           </Card>
 
-          <Card className="opacity-50 cursor-not-allowed text-center py-8">
+          <Card
+            hoverable
+            onClick={() => router.push('/credits')}
+            className="cursor-pointer text-center py-8"
+          >
             <h3 className="text-lg font-semibold text-gray-900 mb-3">
               Credit History
             </h3>
             <p className="text-gray-600 text-sm">
               View your transaction history
             </p>
-            <p className="text-xs text-gray-500 mt-3 italic">
-              Coming soon
-            </p>
           </Card>
         </div>
 
         {/* Presentations List Section */}
         <div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">
-            Your Presentations
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-semibold text-gray-900">
+              Recent Presentations
+            </h3>
+            {presentations.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/presentations')}
+              >
+                View All →
+              </Button>
+            )}
+          </div>
 
           {presentations.length === 0 ? (
             <Card className="text-center py-12">
@@ -116,7 +128,7 @@ export default function DashboardPage() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {presentations.map((presentation) => (
+              {presentations.slice(0, 6).map((presentation) => (
                 <PresentationCard
                   key={presentation.id}
                   presentation={presentation}
