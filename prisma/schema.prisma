@@ -47,6 +47,7 @@ model Presentation {
   transcribedAt DateTime?         @map("transcribed_at")
   visibility    Visibility        @default(PRIVATE)
   status        ProcessingStatus  @default(PROCESSING)
+  tags          String[]          @default([])
   createdAt     DateTime          @default(now()) @map("created_at")
 
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
