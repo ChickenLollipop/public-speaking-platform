@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { TagInput } from '@/components/ui/TagInput';
 import {
   validateVideoFile,
   uploadVideoToS3,
@@ -25,6 +26,7 @@ export default function PracticePage() {
   // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
   const [type, setType] = useState<'VIDEO_UPLOAD' | 'TEXT_SCRIPT'>('VIDEO_UPLOAD');
   const [visibility, setVisibility] = useState<'PRIVATE' | 'COMMUNITY_SHARED'>('PRIVATE');
 
@@ -95,6 +97,7 @@ export default function PracticePage() {
           description: description || undefined,
           type,
           visibility,
+          tags: tags.length > 0 ? tags : undefined,
         }),
       });
 
@@ -202,6 +205,23 @@ export default function PracticePage() {
                 rows={3}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               />
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Tags (Optional)
+              </label>
+              <TagInput
+                value={tags}
+                onChange={setTags}
+                maxTags={5}
+                placeholder="Add tags to categorize your presentation..."
+                disabled={isSubmitting}
+              />
+              <p className="text-sm text-gray-500 mt-2">
+                Tags help others discover your presentation
+              </p>
             </div>
 
             {/* Type Selection */}
