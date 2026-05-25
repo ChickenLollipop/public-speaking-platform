@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { authenticate } from '@/lib/auth/middleware';
+import { validateTags, normalizeTag } from '@/lib/validation/tags';
 
 export async function GET(
   request: NextRequest,
@@ -37,6 +38,73 @@ export async function GET(
     return NextResponse.json({ presentation });
   } catch (error) {
     console.error('Get presentation error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const auth = await authenticate(request);
+
+    if (!auth.success || !auth.user) {
+      return NextResponse.json({ error: auth.error }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const presentation = await db.presentation.findUnique({
+      where: { id },
+    });
+
+    if (!presentation) {
+      return NextResponse.json(
+        { error: 'Presentation not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check ownership
+    if (presentation.userId !== auth.user.userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const updateData: Record<string, unknown> = {};
+
+    // Handle tags if provided
+    if (body.tags !== undefined) {
+      if (!Array.isArray(body.tags)) {
+        return NextResponse.json(
+          { error: 'Tags must be an array' },
+          { status: 400 }
+        );
+      }
+
+      const tagsValidation = validateTags(body.tags);
+      if (!tagsValidation.valid) {
+        return NextResponse.json(
+          { error: tagsValidation.error },
+          { status: 400 }
+        );
+      }
+
+      updateData.tags = body.tags.map(normalizeTag);
+    }
+
+    const updatedPresentation = await db.presentation.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return NextResponse.json({ presentation: updatedPresentation });
+  } catch (error) {
+    console.error('Update presentation error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
