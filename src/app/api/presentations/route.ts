@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { authenticate } from '@/lib/auth/middleware';
 import { createPresentationSchema } from '@/lib/validation/schemas';
+import { validateTags, normalizeTag } from '@/lib/validation/tags';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +24,21 @@ export async function POST(request: NextRequest) {
 
     const { title, description, type, visibility } = validation.data;
 
+    // Extract and validate tags
+    const tags = Array.isArray(body.tags) ? body.tags : [];
+    let normalizedTags: string[] = [];
+
+    if (tags.length > 0) {
+      const tagsValidation = validateTags(tags);
+      if (!tagsValidation.valid) {
+        return NextResponse.json(
+          { error: tagsValidation.error },
+          { status: 400 }
+        );
+      }
+      normalizedTags = tags.map(normalizeTag);
+    }
+
     const presentation = await db.presentation.create({
       data: {
         userId: auth.user.userId,
@@ -31,6 +47,7 @@ export async function POST(request: NextRequest) {
         type,
         visibility,
         status: 'PROCESSING',
+        tags: normalizedTags,
       },
     });
 
