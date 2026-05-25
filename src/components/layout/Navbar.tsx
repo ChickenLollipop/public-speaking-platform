@@ -14,6 +14,7 @@ export function Navbar() {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/presentations', label: 'Presentations' },
     { href: '/practice', label: 'Practice' },
+    { href: '/tags', label: 'Tags' },
     { href: '/feedback/give', label: 'Give Feedback' },
     { href: '/credits', label: 'Credits' },
   ];
