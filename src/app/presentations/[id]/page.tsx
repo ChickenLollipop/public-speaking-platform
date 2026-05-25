@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { TagInput } from '@/components/ui/TagInput';
 import { DeliveryMetrics } from '@/components/presentation/DeliveryMetrics';
 import { ContentAnalysis } from '@/components/presentation/ContentAnalysis';
 import { getVideoUrl } from '@/lib/s3/upload';
@@ -23,6 +24,7 @@ interface Presentation {
   duration?: number;
   transcript?: string;
   transcribedAt?: string;
+  tags?: string[];
   aiAnalysis?: {
     transcript: string;
     deliveryMetrics: any;
@@ -42,6 +44,11 @@ export default function PresentationDetailPage() {
     'idle' | 'transcribing' | 'analyzing' | 'complete' | 'error'
   >('idle');
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
+  const [isEditingTags, setIsEditingTags] = useState(false);
+  const [originalTags, setOriginalTags] = useState<string[]>([]);
+  const [isSavingTags, setIsSavingTags] = useState(false);
+  const [tagError, setTagError] = useState<string | null>(null);
 
   const presentationId = params.id as string;
 
@@ -71,6 +78,8 @@ export default function PresentationDetailPage() {
 
         const data = await response.json();
         setPresentation(data.presentation);
+        setTags(data.presentation.tags || []);
+        setOriginalTags(data.presentation.tags || []);
       } catch (err) {
         console.error('Error loading presentation:', err);
         setError('An error occurred while loading the presentation');
@@ -121,6 +130,72 @@ export default function PresentationDetailPage() {
       setAnalysisError(err instanceof Error ? err.message : 'Analysis failed');
       setAnalysisStep('error');
     }
+  };
+
+  const handleEditToggle = () => {
+    if (isEditingTags) {
+      // Cancel: revert to original tags
+      setTags(originalTags);
+      setTagError(null);
+    }
+    setIsEditingTags(!isEditingTags);
+  };
+
+  const handleSaveTags = async () => {
+    setIsSavingTags(true);
+    setTagError(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      // Optimistic update
+      if (presentation) {
+        setPresentation({ ...presentation, tags });
+        setOriginalTags(tags);
+      }
+
+      const response = await fetch(`/api/presentations/${presentationId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ tags }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        // Revert optimistic update on error
+        if (presentation) {
+          setPresentation({ ...presentation, tags: originalTags });
+        }
+        setTags(originalTags);
+        throw new Error(data.error || 'Failed to save tags');
+      }
+
+      const data = await response.json();
+      setPresentation(data.presentation);
+      setTags(data.presentation.tags || []);
+      setOriginalTags(data.presentation.tags || []);
+      setIsEditingTags(false);
+    } catch (err) {
+      console.error('Error saving tags:', err);
+      setTagError(err instanceof Error ? err.message : 'Failed to save tags');
+    } finally {
+      setIsSavingTags(false);
+    }
+  };
+
+  const getTagColor = (tagName: string): string => {
+    let hash = 0;
+    for (let i = 0; i < tagName.length; i++) {
+      hash = tagName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash % 360);
+    return `hsl(${hue}, 70%, 85%)`;
   };
 
   const getStatusBadge = (status: string) => {
@@ -227,6 +302,62 @@ export default function PresentationDetailPage() {
             </Button>
           </div>
         </div>
+
+        {/* Tags Section */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-700">Tags</h3>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleEditToggle}
+            >
+              {isEditingTags ? 'Cancel' : 'Edit Tags'}
+            </Button>
+          </div>
+
+          {tagError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+              {tagError}
+            </div>
+          )}
+
+          {isEditingTags ? (
+            <div>
+              <TagInput
+                value={tags}
+                onChange={(newTags) => {
+                  setTags(newTags);
+                  setTagError(null);
+                }}
+              />
+              <Button
+                onClick={handleSaveTags}
+                loading={isSavingTags}
+                disabled={isSavingTags}
+                className="mt-4"
+              >
+                Save Tags
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {tags.length > 0 ? (
+                tags.map((tag) => (
+                  <div
+                    key={tag}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                    style={{ backgroundColor: getTagColor(tag), color: '#1f2937' }}
+                  >
+                    {tag}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">No tags</p>
+              )}
+            </div>
+          )}
+        </Card>
 
         {/* Analysis Error */}
         {analysisError && (
