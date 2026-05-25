@@ -18,6 +18,7 @@ interface Presentation {
   duration?: number;
   createdAt: string;
   transcript?: string;
+  tags?: string[];
   aiAnalysis?: {
     overallScore: number;
   } | null;
@@ -36,6 +37,8 @@ export default function PresentationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<{ name: string; count: number }[]>([]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -71,6 +74,28 @@ export default function PresentationsPage() {
     fetchPresentations();
   }, [user]);
 
+  // Fetch available tags
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchTags = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch('/api/tags', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableTags(data.tags || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tags:', error);
+      }
+    };
+
+    fetchTags();
+  }, [user]);
+
   // Apply filters and search
   useEffect(() => {
     let result = [...presentations];
@@ -78,6 +103,13 @@ export default function PresentationsPage() {
     // Filter by status
     if (filterStatus !== 'all') {
       result = result.filter((p) => p.status === filterStatus);
+    }
+
+    // Filter by tags (OR logic)
+    if (selectedTags.length > 0) {
+      result = result.filter((p) =>
+        selectedTags.some((tag) => p.tags?.includes(tag))
+      );
     }
 
     // Search by title or description
@@ -109,7 +141,7 @@ export default function PresentationsPage() {
     });
 
     setFilteredPresentations(result);
-  }, [presentations, searchQuery, sortBy, filterStatus]);
+  }, [presentations, searchQuery, sortBy, filterStatus, selectedTags]);
 
   // Format duration
   const formatDuration = (seconds?: number) => {
@@ -213,6 +245,27 @@ export default function PresentationsPage() {
                 </select>
               </div>
 
+              {/* Tags Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Tags:</span>
+                <select
+                  multiple
+                  size={3}
+                  value={selectedTags}
+                  onChange={(e) => {
+                    const options = Array.from(e.target.selectedOptions);
+                    setSelectedTags(options.map((o) => o.value));
+                  }}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {availableTags.map((tag) => (
+                    <option key={tag.name} value={tag.name}>
+                      {tag.name} ({tag.count})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Sort */}
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-700">Sort by:</span>
@@ -229,12 +282,13 @@ export default function PresentationsPage() {
               </div>
 
               {/* Clear Filters */}
-              {(searchQuery || filterStatus !== 'all' || sortBy !== 'newest') && (
+              {(searchQuery || filterStatus !== 'all' || sortBy !== 'newest' || selectedTags.length > 0) && (
                 <button
                   onClick={() => {
                     setSearchQuery('');
                     setFilterStatus('all');
                     setSortBy('newest');
+                    setSelectedTags([]);
                   }}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
@@ -242,13 +296,33 @@ export default function PresentationsPage() {
                 </button>
               )}
             </div>
+
+            {/* Show selected tags as removable pills */}
+            {selectedTags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedTags.map((tag) => (
+                  <div
+                    key={tag}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
+                  >
+                    {tag}
+                    <button
+                      onClick={() => setSelectedTags(selectedTags.filter((t) => t !== tag))}
+                      className="ml-1 hover:text-blue-900"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </Card>
 
         {/* Presentations List */}
         {filteredPresentations.length === 0 ? (
           <Card className="text-center py-12">
-            {searchQuery || filterStatus !== 'all' ? (
+            {searchQuery || filterStatus !== 'all' || selectedTags.length > 0 ? (
               <>
                 <p className="text-gray-600 mb-4">No presentations match your filters.</p>
                 <div className="flex justify-center">
@@ -257,6 +331,7 @@ export default function PresentationsPage() {
                     onClick={() => {
                       setSearchQuery('');
                       setFilterStatus('all');
+                      setSelectedTags([]);
                     }}
                   >
                     Clear Filters
@@ -320,6 +395,25 @@ export default function PresentationsPage() {
                         {formatDate(presentation.createdAt)}
                       </span>
                     </div>
+
+                    {/* Tags */}
+                    {presentation.tags && presentation.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {presentation.tags.slice(0, 3).map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {presentation.tags.length > 3 && (
+                          <span className="px-2 py-0.5 text-gray-500 text-xs">
+                            +{presentation.tags.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Right Side - Score */}
